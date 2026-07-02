@@ -15,10 +15,13 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
     private float[] projMatrix = new float[16];
     private float[] mvpMatrix = new float[16];
     private float[] modelMatrix = new float[16];
+    public volatile float mAngleX = 0;
+    public volatile float mAngleY = 0;
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        GLES20.glClearColor(0f, 0f, 0f, 1f); // color cielo de fondo
+        // Cambiado a un azul cielo para que ambiente la plataforma de Kamisama
+        GLES20.glClearColor(0.0f, 0.65f, 1.0f, 1.0f);
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
         hemisphere = new HemiSphere();
@@ -36,15 +39,17 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
     public void onDrawFrame(GL10 gl) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
+        // Configuración de la cámara que ya tenías instalada
         Matrix.setLookAtM(viewMatrix, 0,
                 0f, 1f, 9f,
                 0f, -1f, 0f,
                 0f, 1f, 0f);
 
         Matrix.setIdentityM(modelMatrix, 0);
+        Matrix.rotateM(modelMatrix, 0, mAngleX, 0f, 1f, 0f);
+        Matrix.rotateM(modelMatrix, 0, mAngleY, 1f, 0f, 0f);
         Matrix.multiplyMM(mvpMatrix, 0, viewMatrix, 0, modelMatrix, 0);
         Matrix.multiplyMM(mvpMatrix, 0, projMatrix, 0, mvpMatrix, 0);
-
         hemisphere.draw(mvpMatrix, modelMatrix);
         cylinder.draw(mvpMatrix, modelMatrix);
     }
