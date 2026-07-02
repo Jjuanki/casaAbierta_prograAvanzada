@@ -24,6 +24,7 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
     // Angulo de la luz, controlado por MyGLSurfaceView (2 dedos)
     public float lightAngleX = 30f; // "altura" de la luz (latitud)
     public float lightAngleY = 45f; // giro alrededor de la escena (longitud)
+    public float spotlightAngle = 20f; // Tamaño del foco (cono)
     private static final float LIGHT_RADIUS = 6f;
 
     @Override
@@ -47,7 +48,7 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
         Matrix.setLookAtM(viewMatrix, 0,
-                0f, 1f, 8f,
+                0f, 3f, 8f,
                 0f, -1f, 0f,
                 0f, 1f, 0f);
 
@@ -71,7 +72,7 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         float lightZ = LIGHT_RADIUS * (float) (Math.cos(radLat) * Math.cos(radLon));
         float[] lightPos = {lightX, lightY, lightZ};
 
-        hemisphere.draw(mvpMatrix, modelMatrix, lightPos);
-        cylinder.draw(mvpMatrix, modelMatrix, lightPos);
+        hemisphere.draw(mvpMatrix, modelMatrix, lightPos, spotlightAngle);
+        cylinder.draw(mvpMatrix, modelMatrix, lightPos, spotlightAngle);
     }
 }

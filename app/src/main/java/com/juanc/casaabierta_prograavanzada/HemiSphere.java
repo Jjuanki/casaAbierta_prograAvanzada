@@ -98,8 +98,8 @@ public class HemiSphere {
     private static final int LON_SEGMENTS = 20;       // divisiones alrededor
 
     // ---- Spotlight (mismo esquema que Pyramid) ----
-    private float spotlightAngle = 20f, angleDelta = 0.1f;
-    private final float minAngle = 2f, maxAngle = 20f;
+    // private float spotlightAngle = 20f, angleDelta = 0.1f;
+    // private final float minAngle = 2f, maxAngle = 20f;
 
     public HemiSphere() {
         litProgram = ShaderUtils.createProgram(vertexShaderCode, fragmentShaderCode);
@@ -230,7 +230,7 @@ public class HemiSphere {
         return sb;
     }
 
-    public void draw(float[] mvpMatrix, float[] modelMatrix, float[] lightPos) {
+    public void draw(float[] mvpMatrix, float[] modelMatrix, float[] lightPos, float spotlightAngle) {
         GLES20.glUseProgram(litProgram);
 
         int aPosition = GLES20.glGetAttribLocation(litProgram, "aPosition");
@@ -251,8 +251,8 @@ public class HemiSphere {
         float cutOff = (float) Math.cos(Math.toRadians(spotlightAngle));
         GLES20.glUniform1f(GLES20.glGetUniformLocation(litProgram, "uCutOff"), cutOff);
 
-        spotlightAngle += angleDelta;
-        if (spotlightAngle > maxAngle || spotlightAngle < minAngle) angleDelta *= -1;
+        // spotlightAngle += angleDelta;
+        // if (spotlightAngle > maxAngle || spotlightAngle < minAngle) angleDelta *= -1;
 
         GLES20.glEnableVertexAttribArray(aPosition);
         GLES20.glEnableVertexAttribArray(aNormal);

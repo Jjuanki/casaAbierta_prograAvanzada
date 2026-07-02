@@ -9,7 +9,8 @@ public class MyGLSurfaceView extends GLSurfaceView {
 
     private MyGLRenderer mRenderer;
     private float mPreviousX;
-    //private float mPreviousY;
+    private float mPreviousY;
+    private float mPreviousDist;
     private final float TOUCH_SCALE_FACTOR = 180.0f / 320;
 
     public MyGLSurfaceView(Context context) {
@@ -35,18 +36,33 @@ public class MyGLSurfaceView extends GLSurfaceView {
             case MotionEvent.ACTION_POINTER_DOWN:
                 // Reinicia la referencia para que no "salte" al agregar/quitar un dedo
                 mPreviousX = x;
-                //mPreviousY = y;
+                mPreviousY = y;
+                if (e.getPointerCount() >= 2) {
+                    mPreviousDist = spacing(e);
+                }
                 break;
 
             case MotionEvent.ACTION_MOVE:
                 float dx = x - mPreviousX;
-                //float dy = y - mPreviousY;
+                float dy = y - mPreviousY;
 
                 if (mRenderer != null) {
                     if (e.getPointerCount() >= 2) {
-                        // DOS DEDOS -> mover la luz (orbita alrededor de la escena)
+                        // DOS DEDOS -> mover la luz y cambiar tamaño
+                        float newDist = spacing(e);
+                        if (newDist > 10f) {
+                            float deltaDist = newDist - mPreviousDist;
+                            // Ajustar el ángulo de la luz (tamaño)
+                            mRenderer.spotlightAngle -= deltaDist * 0.1f;
+                            // Limitar el ángulo
+                            if (mRenderer.spotlightAngle < 2f) mRenderer.spotlightAngle = 2f;
+                            if (mRenderer.spotlightAngle > 45f) mRenderer.spotlightAngle = 45f;
+                            mPreviousDist = newDist;
+                        }
+
+                        // Mover la luz (orbita)
                         mRenderer.lightAngleY += dx * TOUCH_SCALE_FACTOR;
-                       // mRenderer.lightAngleX += dy * TOUCH_SCALE_FACTOR;
+                        mRenderer.lightAngleX += dy * TOUCH_SCALE_FACTOR;
                     } else {
                         // UN DEDO -> rotar el modelo (comportamiento original)
                         mRenderer.mAngleX += dx * TOUCH_SCALE_FACTOR;
@@ -56,10 +72,17 @@ public class MyGLSurfaceView extends GLSurfaceView {
                 }
 
                 mPreviousX = x;
-                //mPreviousY = y;
+                mPreviousY = y;
                 break;
         }
 
         return true;
+    }
+
+    /** Determine the distance between the first two pointers */
+    private float spacing(MotionEvent event) {
+        float x = event.getX(0) - event.getX(1);
+        float y = event.getY(0) - event.getY(1);
+        return (float) Math.sqrt(x * x + y * y);
     }
 }

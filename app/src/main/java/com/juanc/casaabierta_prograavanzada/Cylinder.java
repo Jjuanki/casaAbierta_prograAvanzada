@@ -66,8 +66,8 @@ public class Cylinder {
     private final float[] color = {0.05f, 0.05f, 0.05f, 1.0f}; // casi negro
 
     // ---- Spotlight (mismo esquema que Pyramid) ----
-    private float spotlightAngle = 20f, angleDelta = 0.1f;
-    private final float minAngle = 2f, maxAngle = 20f;
+    // private float spotlightAngle = 20f, angleDelta = 0.1f;
+    // private final float minAngle = 2f, maxAngle = 20f;
 
     public Cylinder() {
         program = ShaderUtils.createProgram(vertexShaderCode, fragmentShaderCode);
@@ -118,7 +118,7 @@ public class Cylinder {
         indexBuffer.position(0);
     }
 
-    public void draw(float[] mvpMatrix, float[] modelMatrix, float[] lightPos) {
+    public void draw(float[] mvpMatrix, float[] modelMatrix, float[] lightPos, float spotlightAngle) {
         GLES20.glUseProgram(program);
 
         int aPosition = GLES20.glGetAttribLocation(program, "aPosition");
@@ -139,8 +139,8 @@ public class Cylinder {
         float cutOff = (float) Math.cos(Math.toRadians(spotlightAngle));
         GLES20.glUniform1f(GLES20.glGetUniformLocation(program, "uCutOff"), cutOff);
 
-        spotlightAngle += angleDelta;
-        if (spotlightAngle > maxAngle || spotlightAngle < minAngle) angleDelta *= -1;
+        // spotlightAngle += angleDelta;
+        // if (spotlightAngle > maxAngle || spotlightAngle < minAngle) angleDelta *= -1;
 
         GLES20.glEnableVertexAttribArray(aPosition);
         GLES20.glEnableVertexAttribArray(aNormal);
