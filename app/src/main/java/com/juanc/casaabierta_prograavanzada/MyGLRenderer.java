@@ -1,4 +1,5 @@
 package com.juanc.casaabierta_prograavanzada;
+
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
@@ -15,13 +16,19 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
     private float[] projMatrix = new float[16];
     private float[] mvpMatrix = new float[16];
     private float[] modelMatrix = new float[16];
-    public volatile float mAngleX = 0;
-    public volatile float mAngleY = 0;
+
+    // Rotacion del modelo, controlada por MyGLSurfaceView (1 dedo)
+    public float mAngleX = 0f;
+    public float mAngleY = 0f;
+
+    // Angulo de la luz, controlado por MyGLSurfaceView (2 dedos)
+    public float lightAngleX = 30f; // "altura" de la luz (latitud)
+    public float lightAngleY = 45f; // giro alrededor de la escena (longitud)
+    private static final float LIGHT_RADIUS = 6f;
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        // Cambiado a un azul cielo para que ambiente la plataforma de Kamisama
-        GLES20.glClearColor(0.0f, 0.65f, 1.0f, 1.0f);
+        GLES20.glClearColor(0.4f, 0.6f, 0.7f, 1f); // color cielo de fondo
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
         hemisphere = new HemiSphere();
@@ -39,18 +46,32 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
     public void onDrawFrame(GL10 gl) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
-        // Configuración de la cámara que ya tenías instalada
         Matrix.setLookAtM(viewMatrix, 0,
-                0f, 1f, 9f,
+                0f, 1f, 8f,
                 0f, -1f, 0f,
                 0f, 1f, 0f);
 
         Matrix.setIdentityM(modelMatrix, 0);
         Matrix.rotateM(modelMatrix, 0, mAngleX, 0f, 1f, 0f);
         Matrix.rotateM(modelMatrix, 0, mAngleY, 1f, 0f, 0f);
+
         Matrix.multiplyMM(mvpMatrix, 0, viewMatrix, 0, modelMatrix, 0);
         Matrix.multiplyMM(mvpMatrix, 0, projMatrix, 0, mvpMatrix, 0);
-        hemisphere.draw(mvpMatrix, modelMatrix);
-        cylinder.draw(mvpMatrix, modelMatrix);
+
+        // ---- Calcular la posicion de la luz en base a los angulos controlados por el usuario ----
+        // Limitar la latitud para que no se "invierta" al pasar los polos
+        if (lightAngleX > 89f) lightAngleX = 89f;
+        if (lightAngleX < -89f) lightAngleX = -89f;
+
+        float radLat = (float) Math.toRadians(lightAngleX);
+        float radLon = (float) Math.toRadians(lightAngleY);
+
+        float lightX = LIGHT_RADIUS * (float) (Math.cos(radLat) * Math.sin(radLon));
+        float lightY = LIGHT_RADIUS * (float) Math.sin(radLat);
+        float lightZ = LIGHT_RADIUS * (float) (Math.cos(radLat) * Math.cos(radLon));
+        float[] lightPos = {lightX, lightY, lightZ};
+
+        hemisphere.draw(mvpMatrix, modelMatrix, lightPos);
+        cylinder.draw(mvpMatrix, modelMatrix, lightPos);
     }
 }
