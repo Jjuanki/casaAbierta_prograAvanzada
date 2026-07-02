@@ -9,7 +9,7 @@ public class MyGLSurfaceView extends GLSurfaceView {
 
     private MyGLRenderer mRenderer;
     private float mPreviousX;
-    private float mPreviousY;
+    //private float mPreviousY;
     private final float TOUCH_SCALE_FACTOR = 180.0f / 320;
 
     public MyGLSurfaceView(Context context) {
@@ -35,28 +35,28 @@ public class MyGLSurfaceView extends GLSurfaceView {
             case MotionEvent.ACTION_POINTER_DOWN:
                 // Reinicia la referencia para que no "salte" al agregar/quitar un dedo
                 mPreviousX = x;
-                mPreviousY = y;
+                //mPreviousY = y;
                 break;
 
             case MotionEvent.ACTION_MOVE:
                 float dx = x - mPreviousX;
-                float dy = y - mPreviousY;
+                //float dy = y - mPreviousY;
 
                 if (mRenderer != null) {
                     if (e.getPointerCount() >= 2) {
                         // DOS DEDOS -> mover la luz (orbita alrededor de la escena)
                         mRenderer.lightAngleY += dx * TOUCH_SCALE_FACTOR;
-                        mRenderer.lightAngleX += dy * TOUCH_SCALE_FACTOR;
+                       // mRenderer.lightAngleX += dy * TOUCH_SCALE_FACTOR;
                     } else {
                         // UN DEDO -> rotar el modelo (comportamiento original)
                         mRenderer.mAngleX += dx * TOUCH_SCALE_FACTOR;
-                        mRenderer.mAngleY += dy * TOUCH_SCALE_FACTOR;
+                        //mRenderer.mAngleY += dy * TOUCH_SCALE_FACTOR;
                     }
                     requestRender();
                 }
 
                 mPreviousX = x;
-                mPreviousY = y;
+                //mPreviousY = y;
                 break;
         }
 
