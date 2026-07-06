@@ -54,19 +54,19 @@ public class MyGLSurfaceView extends GLSurfaceView {
                             float deltaDist = newDist - mPreviousDist;
                             // Ajustar el ángulo de la luz (tamaño)
                             mRenderer.spotlightAngle -= deltaDist * 0.1f;
-                            // Limitar el ángulo
+                    
                             if (mRenderer.spotlightAngle < 2f) mRenderer.spotlightAngle = 2f;
                             if (mRenderer.spotlightAngle > 45f) mRenderer.spotlightAngle = 45f;
                             mPreviousDist = newDist;
                         }
 
-                        // Mover la luz (orbita)
+                        // Mover la luz 
                         mRenderer.lightAngleY += dx * TOUCH_SCALE_FACTOR;
                         mRenderer.lightAngleX += dy * TOUCH_SCALE_FACTOR;
                     } else {
-                        // UN DEDO -> rotar el modelo (comportamiento original)
+                        // UN DEDO -> rotar el modelo 
                         mRenderer.mAngleX += dx * TOUCH_SCALE_FACTOR;
-                        //mRenderer.mAngleY += dy * TOUCH_SCALE_FACTOR;
+                       
                     }
                     requestRender();
                 }
@@ -79,7 +79,6 @@ public class MyGLSurfaceView extends GLSurfaceView {
         return true;
     }
 
-    /** Determine the distance between the first two pointers */
     private float spacing(MotionEvent event) {
         float x = event.getX(0) - event.getX(1);
         float y = event.getY(0) - event.getY(1);
