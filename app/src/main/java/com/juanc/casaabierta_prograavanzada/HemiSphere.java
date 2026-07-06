@@ -10,7 +10,7 @@ import java.util.List;
 
 public class HemiSphere {
 
-    // ---- Shader con iluminacion tipo spotlight (igual esquema que Pyramid) ----
+  
     private final String vertexShaderCode =
             "attribute vec4 aPosition;" +
                     "attribute vec3 aNormal;" +
@@ -53,7 +53,7 @@ public class HemiSphere {
                     "  gl_FragColor = vec4(result, uColor.a);" +
                     "}";
 
-    // Shader simple (sin luz) solo para las lineas divisorias entre bandas
+    
     private final String lineVertexShaderCode =
             "uniform mat4 uMVPMatrix;" +
                     "attribute vec4 vPosition;" +
@@ -71,41 +71,39 @@ public class HemiSphere {
     private final int litProgram;
     private final int lineProgram;
 
-    // Datos del domo (posicion + normal)
+  
     private final FloatBuffer domeVertexBuffer;
     private final FloatBuffer domeNormalBuffer;
     private final ShortBuffer[] bandIndexBuffers;
     private final int[] bandIndexCounts;
     private final float[][] bandColors;
 
-    // Tapa plana de arriba (posicion + normal)
+  
     private final FloatBuffer capVertexBuffer;
     private final FloatBuffer capNormalBuffer;
     private final ShortBuffer capIndexBuffer;
     private final int capIndexCount;
-    private final float[] capColor = {0.96f, 0.93f, 0.85f, 1.0f}; // crema
+    private final float[] capColor = {0.96f, 0.93f, 0.85f, 1.0f}; 
 
-    // Anillos de linea (bordes negros entre cada banda de color)
+   
     private final ShortBuffer[] ringLineBuffers;
     private final int ringLineCount = LON_SEGMENTS + 1;
-    private final float[] lineColor = {0.05f, 0.05f, 0.05f, 1.0f}; // casi negro
+    private final float[] lineColor = {0.05f, 0.05f, 0.05f, 1.0f}; 
 
-    // Parametros (ajusta a gusto)
+    
     private static final float RADIUS = 1.5f;
-    private static final int NUM_BANDS = 6;          // cantidad de franjas de color
-    private static final int SEGMENTS_PER_BAND = 5;  // resolucion de cada franja
+    private static final int NUM_BANDS = 6;          
+    private static final int SEGMENTS_PER_BAND = 5;  
     private static final int LAT_SEGMENTS = NUM_BANDS * SEGMENTS_PER_BAND;
-    private static final int LON_SEGMENTS = 20;       // divisiones alrededor
+    private static final int LON_SEGMENTS = 20;      
 
-    // ---- Spotlight (mismo esquema que Pyramid) ----
-    // private float spotlightAngle = 20f, angleDelta = 0.1f;
-    // private final float minAngle = 2f, maxAngle = 20f;
+ 
 
     public HemiSphere() {
         litProgram = ShaderUtils.createProgram(vertexShaderCode, fragmentShaderCode);
         lineProgram = ShaderUtils.createProgram(lineVertexShaderCode, lineFragmentShaderCode);
 
-        // Colores de las franjas, de arriba (ecuador) hacia abajo (punta) - intercalados
+       
         bandColors = new float[][]{
                 {0.82f, 0.35f, 0.10f, 1.0f}, // naranja
                 {0.96f, 0.93f, 0.85f, 1.0f}, // crema
@@ -120,8 +118,8 @@ public class HemiSphere {
         float[] domeNorms = new float[(LAT_SEGMENTS + 1) * (LON_SEGMENTS + 1) * 3];
         int idx = 0;
         for (int lat = 0; lat <= LAT_SEGMENTS; lat++) {
-            float phi = (float) (Math.PI / 2 * lat / LAT_SEGMENTS); // 0 -> PI/2
-            float y = -RADIUS * (float) Math.sin(phi); // curva hacia abajo
+            float phi = (float) (Math.PI / 2 * lat / LAT_SEGMENTS); 
+            float y = -RADIUS * (float) Math.sin(phi); 
             float r = RADIUS * (float) Math.cos(phi);
 
             for (int lon = 0; lon <= LON_SEGMENTS; lon++) {
@@ -133,7 +131,7 @@ public class HemiSphere {
                 domeVerts[idx + 1] = y;
                 domeVerts[idx + 2] = z;
 
-                // Como la esfera esta centrada en el origen, la normal es el vertice normalizado
+         
                 domeNorms[idx] = x / RADIUS;
                 domeNorms[idx + 1] = y / RADIUS;
                 domeNorms[idx + 2] = z / RADIUS;
@@ -145,14 +143,13 @@ public class HemiSphere {
         domeVertexBuffer = toFloatBuffer(domeVerts);
         domeNormalBuffer = toFloatBuffer(domeNorms);
 
-        // ---- Indices: un triangle strip separado por cada banda ----
+       
         bandIndexBuffers = new ShortBuffer[NUM_BANDS];
         bandIndexCounts = new int[NUM_BANDS];
 
         for (int band = 0; band < NUM_BANDS; band++) {
             int latStart = band * SEGMENTS_PER_BAND;
-            int latEnd = latStart + SEGMENTS_PER_BAND; // banda cubre [latStart, latEnd]
-
+            int latEnd = latStart + SEGMENTS_PER_BAND; 
             List<Short> indexList = new ArrayList<>();
             for (int lat = latStart; lat < latEnd; lat++) {
                 for (int lon = 0; lon <= LON_SEGMENTS; lon++) {
@@ -169,7 +166,7 @@ public class HemiSphere {
             bandIndexBuffers[band] = toShortBuffer(bandIndices);
         }
 
-        // ---- Anillos de linea: un borde por cada inicio de banda (para separar colores) ----
+       
         ringLineBuffers = new ShortBuffer[NUM_BANDS];
         for (int band = 0; band < NUM_BANDS; band++) {
             int lat = band * SEGMENTS_PER_BAND;
@@ -180,7 +177,6 @@ public class HemiSphere {
             ringLineBuffers[band] = toShortBuffer(ringIndices);
         }
 
-        // ---- Tapa plana superior (disco en y = 0), normal apuntando hacia +Y ----
         float[] capVerts = new float[(LON_SEGMENTS + 2) * 3];
         float[] capNorms = new float[(LON_SEGMENTS + 2) * 3];
         idx = 0;
@@ -251,8 +247,6 @@ public class HemiSphere {
         float cutOff = (float) Math.cos(Math.toRadians(spotlightAngle));
         GLES20.glUniform1f(GLES20.glGetUniformLocation(litProgram, "uCutOff"), cutOff);
 
-        // spotlightAngle += angleDelta;
-        // if (spotlightAngle > maxAngle || spotlightAngle < minAngle) angleDelta *= -1;
 
         GLES20.glEnableVertexAttribArray(aPosition);
         GLES20.glEnableVertexAttribArray(aNormal);
@@ -274,7 +268,7 @@ public class HemiSphere {
         GLES20.glDisableVertexAttribArray(aPosition);
         GLES20.glDisableVertexAttribArray(aNormal);
 
-        // Lineas negras separando cada banda de color (sin iluminacion, programa simple)
+        // Lineas negras separando cada banda de color 
         GLES20.glUseProgram(lineProgram);
         int linePos = GLES20.glGetAttribLocation(lineProgram, "vPosition");
         int lineColorHandle = GLES20.glGetUniformLocation(lineProgram, "vColor");
