@@ -57,22 +57,20 @@ public class Cylinder {
     private final short[] indices;
     private final ShortBuffer indexBuffer;
 
-    // Parametros (ajusta a gusto)
-    private static final float RADIUS = 0.05f;   // delgado, como un cable
-    private static final float TOP_Y = -1.45f;    // debe coincidir con el polo inferior de Hemisphere
-    private static final float BOTTOM_Y = -4.0f;  // donde termina (hacia las nubes)
+   
+    private static final float RADIUS = 0.05f;   
+    private static final float TOP_Y = -1.45f;    
+    private static final float BOTTOM_Y = -4.0f;  
     private static final int SEGMENTS = 10;
 
-    private final float[] color = {0.05f, 0.05f, 0.05f, 1.0f}; // casi negro
+    private final float[] color = {0.05f, 0.05f, 0.05f, 1.0f}; 
 
-    // ---- Spotlight (mismo esquema que Pyramid) ----
-    // private float spotlightAngle = 20f, angleDelta = 0.1f;
-    // private final float minAngle = 2f, maxAngle = 20f;
+    
 
     public Cylinder() {
         program = ShaderUtils.createProgram(vertexShaderCode, fragmentShaderCode);
 
-        // anillo superior + anillo inferior, formando una tira de triangulos
+  
         float[] verts = new float[(SEGMENTS + 1) * 2 * 3];
         float[] norms = new float[(SEGMENTS + 1) * 2 * 3];
         int idx = 0;
@@ -80,16 +78,16 @@ public class Cylinder {
             float theta = (float) (2 * Math.PI * i / SEGMENTS);
             float x = RADIUS * (float) Math.cos(theta);
             float z = RADIUS * (float) Math.sin(theta);
-            // normal lateral: apunta hacia afuera del eje del cilindro (sin componente Y)
+   
             float nx = (float) Math.cos(theta);
             float nz = (float) Math.sin(theta);
 
-            // vertice superior
+          
             verts[idx] = x; verts[idx + 1] = TOP_Y; verts[idx + 2] = z;
             norms[idx] = nx; norms[idx + 1] = 0f; norms[idx + 2] = nz;
             idx += 3;
 
-            // vertice inferior
+            
             verts[idx] = x; verts[idx + 1] = BOTTOM_Y; verts[idx + 2] = z;
             norms[idx] = nx; norms[idx + 1] = 0f; norms[idx + 2] = nz;
             idx += 3;
@@ -128,7 +126,7 @@ public class Cylinder {
         GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(program, "uModelMatrix"), 1, false, modelMatrix, 0);
         GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(program, "uMVPMatrix"), 1, false, mvpMatrix, 0);
 
-        // La luz apunta siempre hacia el centro de la escena (como una linterna que sigue al objeto)
+
         float dirX = -lightPos[0], dirY = -lightPos[1], dirZ = -lightPos[2];
         float len = (float) Math.sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ);
         if (len > 0f) { dirX /= len; dirY /= len; dirZ /= len; }
@@ -139,8 +137,6 @@ public class Cylinder {
         float cutOff = (float) Math.cos(Math.toRadians(spotlightAngle));
         GLES20.glUniform1f(GLES20.glGetUniformLocation(program, "uCutOff"), cutOff);
 
-        // spotlightAngle += angleDelta;
-        // if (spotlightAngle > maxAngle || spotlightAngle < minAngle) angleDelta *= -1;
 
         GLES20.glEnableVertexAttribArray(aPosition);
         GLES20.glEnableVertexAttribArray(aNormal);
