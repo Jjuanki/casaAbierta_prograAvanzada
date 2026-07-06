@@ -8,36 +8,36 @@ import android.opengl.GLES20;
 
 public class Sphere {
     private FloatBuffer vertexBuffer;
-    private FloatBuffer normalBuffer; // NUEVO: Búfer para almacenar las normales
+    private FloatBuffer normalBuffer; 
     private final int mProgram;
     private int mPositionHandle;
-    private int mNormalHandle;       // NUEVO: Handle para el atributo de normales
+    private int mNormalHandle;       
     private int mColorHandle;
     private int mMVPMatrixHandle;
-    private int mLightPosHandle;      // NUEVO: Handle para la posición de la luz
+    private int mLightPosHandle;      
     private int vertexCount;
 
     float[] colorHelado = {1.0f, 0.8f, 0.85f, 1.0f};
 
-    // SHADERS ACTUALIZADOS: Ahora calculan matemáticamente el rebote de la luz en el Vertex Shader
+   
     private final String vertexShaderCode =
             "uniform mat4 uMVPMatrix;" +
                     "attribute vec4 vPosition;" +
-                    "attribute vec3 vNormal;" +      // Recibe la normal del vértice
-                    "uniform vec3 uLightPos;" +      // Recibe la posición de la luz
+                    "attribute vec3 vNormal;" +      
+                    "uniform vec3 uLightPos;" +     
                     "uniform vec4 vColor;" +
-                    "varying vec4 vOutColor;" +      // Pasa el color calculado al Fragment Shader
+                    "varying vec4 vOutColor;" +      
                     "void main() {" +
                     "  gl_Position = uMVPMatrix * vPosition;" +
                     "  vec3 normal = normalize(vNormal);" +
                     "  vec3 lightDir = normalize(uLightPos - vPosition.xyz);" +
-                    "  float diffuse = max(dot(normal, lightDir), 0.15);" + // 0.15 de luz ambiental mínima para que no sea negro total
+                    "  float diffuse = max(dot(normal, lightDir), 0.15);" + 
                     "  vOutColor = vColor * diffuse;" +
                     "}";
 
     private final String fragmentShaderCode =
             "precision mediump float;" +
-                    "varying vec4 vOutColor;" +      // Recibe el color iluminado
+                    "varying vec4 vOutColor;" +      
                     "void main() {" +
                     "  gl_FragColor = vOutColor;" +
                     "}";
@@ -45,7 +45,7 @@ public class Sphere {
     public Sphere(float radius, int rings, int sectors) {
 
         float[] vertices = new float[rings * sectors * 2 * 3];
-        float[] normales = new float[rings * sectors * 2 * 3]; // NUEVO: Arreglo temporal de normales
+        float[] normales = new float[rings * sectors * 2 * 3]; 
         int vIdx = 0;
 
         for (int r = 0; r < rings; r++) {
@@ -61,7 +61,7 @@ public class Sphere {
                 vertices[vIdx + 1] = y1 * radius;
                 vertices[vIdx + 2] = z1 * radius;
 
-                // En una esfera, la dirección de la normal es la misma posición sin escalar (radio = 1)
+               
                 normales[vIdx] = x1;
                 normales[vIdx + 1] = y1;
                 normales[vIdx + 2] = z1;
@@ -85,14 +85,14 @@ public class Sphere {
 
         vertexCount = vIdx / 3;
 
-        // Búfer de Vértices
+       
         ByteBuffer bb = ByteBuffer.allocateDirect(vIdx * 4);
         bb.order(ByteOrder.nativeOrder());
         vertexBuffer = bb.asFloatBuffer();
         vertexBuffer.put(vertices);
         vertexBuffer.position(0);
 
-        // NUEVO: Inicializar el búfer nativo para las normales
+       
         ByteBuffer nbb = ByteBuffer.allocateDirect(normales.length * 4);
         nbb.order(ByteOrder.nativeOrder());
         normalBuffer = nbb.asFloatBuffer();
@@ -108,38 +108,38 @@ public class Sphere {
         GLES20.glLinkProgram(mProgram);
     }
 
-    // MODIFICADO: Ahora el método draw pide obligatoriamente el arreglo con las coordenadas de la luz
+ 
     public void draw(float[] mvpMatrix, float[] lightPos) {
         GLES20.glUseProgram(mProgram);
 
-        // Enlazar Vértices
+       
         mPositionHandle = GLES20.glGetAttribLocation(mProgram, "vPosition");
         GLES20.glEnableVertexAttribArray(mPositionHandle);
         GLES20.glVertexAttribPointer(mPositionHandle, 3,
                 GLES20.GL_FLOAT, false, 3 * 4, vertexBuffer);
 
-        // NUEVO: Enlazar Normales
+        
         mNormalHandle = GLES20.glGetAttribLocation(mProgram, "vNormal");
         GLES20.glEnableVertexAttribArray(mNormalHandle);
         GLES20.glVertexAttribPointer(mNormalHandle, 3,
                 GLES20.GL_FLOAT, false, 3 * 4, normalBuffer);
 
-        // Asignar Color Interno
+       
         mColorHandle = GLES20.glGetUniformLocation(mProgram, "vColor");
         GLES20.glUniform4fv(mColorHandle, 1, colorHelado, 0);
 
-        // NUEVO: Pasar la posición de la luz al shader
+       
         mLightPosHandle = GLES20.glGetUniformLocation(mProgram, "uLightPos");
         GLES20.glUniform3fv(mLightPosHandle, 1, lightPos, 0);
 
-        // Asignar Matriz MVP
+       
         mMVPMatrixHandle = GLES20.glGetUniformLocation(mProgram, "uMVPMatrix");
         GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, mvpMatrix, 0);
 
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, vertexCount);
 
         GLES20.glDisableVertexAttribArray(mPositionHandle);
-        GLES20.glDisableVertexAttribArray(mNormalHandle); // Deshabilitar normales al terminar
+        GLES20.glDisableVertexAttribArray(mNormalHandle);
     }
 
     private int loadShader(int type, String shaderCode){
