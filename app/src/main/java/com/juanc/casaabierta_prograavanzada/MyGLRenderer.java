@@ -26,19 +26,17 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
     private float[] mvpMatrix = new float[16];
     private float[] modelMatrix = new float[16];
 
-    // Rotacion del modelo, controlada por MyGLSurfaceView (1 dedo)
     public float mAngleX = 0f;
     public float mAngleY = 0f;
 
-    // Angulo de la luz, controlado por MyGLSurfaceView (2 dedos)
-    public float lightAngleX = 30f; // "altura" de la luz (latitud)
-    public float lightAngleY = 45f; // giro alrededor de la escena (longitud)
-    public float spotlightAngle = 20f; // Tamaño del foco (cono)
+    public float lightAngleX = 30f;
+    public float lightAngleY = 45f; 
+    public float spotlightAngle = 20f;
     private static final float LIGHT_RADIUS = 6f;
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        GLES20.glClearColor(0.4f, 0.6f, 0.7f, 1f); // color cielo de fondo
+        GLES20.glClearColor(0.4f, 0.6f, 0.7f, 1f);
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
         hemisphere = new HemiSphere();
@@ -72,8 +70,6 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         Matrix.multiplyMM(mvpMatrix, 0, viewMatrix, 0, modelMatrix, 0);
         Matrix.multiplyMM(mvpMatrix, 0, projMatrix, 0, mvpMatrix, 0);
 
-        // ---- Calcular la posicion de la luz en base a los angulos controlados por el usuario ----
-        // Limitar la latitud para que no se "invierta" al pasar los polos
         if (lightAngleX > 89f) lightAngleX = 89f;
         if (lightAngleX < -89f) lightAngleX = -89f;
 
@@ -88,38 +84,22 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         hemisphere.draw(mvpMatrix, modelMatrix, lightPos, spotlightAngle);
         cylinder.draw(mvpMatrix, modelMatrix, lightPos, spotlightAngle);
 
-        // ... (Aquí va tu código que calcula la posición de la luz: lightX, lightY, lightZ, lightPos) ...
 
-// ==========================================
-// 1. CONO (BASE)
-// ==========================================
         android.opengl.Matrix.setIdentityM(mModelMatrix, 0);
         android.opengl.Matrix.translateM(mModelMatrix, 0, 0.0f, 0.6f, 0.0f);
         android.opengl.Matrix.multiplyMM(mTemporaryMatrix, 0, mvpMatrix, 0, mModelMatrix, 0);
-        mCone.draw(mTemporaryMatrix, lightPos); // <--- Le pasamos tu variable lightPos
-
-// ==========================================
-// 2. BOLA CENTRAL (CABEZA)
-// ==========================================
+        mCone.draw(mTemporaryMatrix, lightPos);
         android.opengl.Matrix.setIdentityM(mModelMatrix, 0);
         android.opengl.Matrix.translateM(mModelMatrix, 0, 0.0f, 1.2f, 0.0f);
         android.opengl.Matrix.multiplyMM(mTemporaryMatrix, 0, mvpMatrix, 0, mModelMatrix, 0);
-        mMainScoop.draw(mTemporaryMatrix, lightPos); // <--- Le pasamos tu variable lightPos
-
-// ==========================================
-// 3. OREJA IZQUIERDA
-// ==========================================
+        mMainScoop.draw(mTemporaryMatrix, lightPos);
         android.opengl.Matrix.setIdentityM(mModelMatrix, 0);
         android.opengl.Matrix.translateM(mModelMatrix, 0, -0.45f, 1.7f, 0.0f);
         android.opengl.Matrix.multiplyMM(mTemporaryMatrix, 0, mvpMatrix, 0, mModelMatrix, 0);
-        mEarScoop.draw(mTemporaryMatrix, lightPos); // <--- Le pasamos tu variable lightPos
-
-// ==========================================
-// 4. OREJA DERECHA
-// ==========================================
+        mEarScoop.draw(mTemporaryMatrix, lightPos); 
         android.opengl.Matrix.setIdentityM(mModelMatrix, 0);
         android.opengl.Matrix.translateM(mModelMatrix, 0, 0.45f, 1.7f, 0.0f);
         android.opengl.Matrix.multiplyMM(mTemporaryMatrix, 0, mvpMatrix, 0, mModelMatrix, 0);
-        mEarScoop.draw(mTemporaryMatrix, lightPos); // <--- Le pasamos tu variable lightPos
+        mEarScoop.draw(mTemporaryMatrix, lightPos);
     }
 }
