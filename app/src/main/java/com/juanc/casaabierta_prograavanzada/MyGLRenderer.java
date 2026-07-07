@@ -6,6 +6,7 @@ import android.opengl.Matrix;
 
 import com.juanc.casaabierta_prograavanzada.figura1.Cone;
 import com.juanc.casaabierta_prograavanzada.figura1.Sphere;
+import com.juanc.casaabierta_prograavanzada.separation.Cube;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -20,7 +21,7 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
 
     private HemiSphere hemisphere;
     private Cylinder cylinder;
-
+    private Cube pared;
     private float[] viewMatrix = new float[16];
     private float[] projMatrix = new float[16];
     private float[] mvpMatrix = new float[16];
@@ -45,6 +46,7 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         mCone = new Cone(30, 0.5f, 1.2f);
         mMainScoop = new Sphere(0.6f, 30, 30);
         mEarScoop = new Sphere(0.35f, 20, 20);
+        pared = new Cube();
     }
 
     @Override
@@ -59,7 +61,7 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
         Matrix.setLookAtM(viewMatrix, 0,
-                0f, 3f, 8f,
+                0f, 3f, 9f,
                 0f, -1f, 0f,
                 0f, 1f, 0f);
 
@@ -85,21 +87,26 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         cylinder.draw(mvpMatrix, modelMatrix, lightPos, spotlightAngle);
 
 
-        android.opengl.Matrix.setIdentityM(mModelMatrix, 0);
-        android.opengl.Matrix.translateM(mModelMatrix, 0, 0.0f, 0.6f, 0.0f);
-        android.opengl.Matrix.multiplyMM(mTemporaryMatrix, 0, mvpMatrix, 0, mModelMatrix, 0);
-        mCone.draw(mTemporaryMatrix, lightPos);
-        android.opengl.Matrix.setIdentityM(mModelMatrix, 0);
-        android.opengl.Matrix.translateM(mModelMatrix, 0, 0.0f, 1.2f, 0.0f);
-        android.opengl.Matrix.multiplyMM(mTemporaryMatrix, 0, mvpMatrix, 0, mModelMatrix, 0);
-        mMainScoop.draw(mTemporaryMatrix, lightPos);
-        android.opengl.Matrix.setIdentityM(mModelMatrix, 0);
-        android.opengl.Matrix.translateM(mModelMatrix, 0, -0.45f, 1.7f, 0.0f);
-        android.opengl.Matrix.multiplyMM(mTemporaryMatrix, 0, mvpMatrix, 0, mModelMatrix, 0);
-        mEarScoop.draw(mTemporaryMatrix, lightPos); 
-        android.opengl.Matrix.setIdentityM(mModelMatrix, 0);
-        android.opengl.Matrix.translateM(mModelMatrix, 0, 0.45f, 1.7f, 0.0f);
-        android.opengl.Matrix.multiplyMM(mTemporaryMatrix, 0, mvpMatrix, 0, mModelMatrix, 0);
-        mEarScoop.draw(mTemporaryMatrix, lightPos);
+        Matrix.setIdentityM(mModelMatrix, 0);
+        Matrix.setIdentityM(mModelMatrix, 0);
+        Matrix.translateM(mModelMatrix, 0, 0f, 0.5f, 0f);
+        Matrix.rotateM(mModelMatrix, 0, mAngleX, 0f, 1f, 0f);
+        Matrix.rotateM(mModelMatrix, 0, mAngleY, 1f, 0f, 0f);
+        Matrix.scaleM(mModelMatrix, 0, 0.9f, 0.7f, 0.02f);
+        Matrix.multiplyMM(mTemporaryMatrix, 0, viewMatrix, 0, mModelMatrix, 0);
+        Matrix.multiplyMM(mTemporaryMatrix, 0, projMatrix, 0, mTemporaryMatrix, 0);
+        pared.draw(mTemporaryMatrix, mModelMatrix, lightPos, spotlightAngle);
+
+        Matrix.setIdentityM(mModelMatrix, 0);
+        Matrix.translateM(mModelMatrix, 0, 0f, 0.8f, 0f);
+        Matrix.rotateM(mModelMatrix, 0, mAngleX, 0f, 1f, 0f);
+        Matrix.rotateM(mModelMatrix, 0, mAngleY, 1f, 0f, 0f);
+        Matrix.rotateM(mModelMatrix, 0, 90f, 0f, 0f, 1f);   // rota 90° para que quede perpendicular al primero
+        Matrix.scaleM(mModelMatrix, 0, 0.5f, 0.02f, 0.9f);
+        Matrix.multiplyMM(mTemporaryMatrix, 0, viewMatrix, 0, mModelMatrix, 0);
+        Matrix.multiplyMM(mTemporaryMatrix, 0, projMatrix, 0, mTemporaryMatrix, 0);
+        pared.draw(mTemporaryMatrix, mModelMatrix, lightPos, spotlightAngle);
+
+
     }
 }
