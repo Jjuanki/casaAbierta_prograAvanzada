@@ -22,6 +22,9 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
     private HemiSphere hemisphere;
     private Cylinder cylinder;
     private Cube pared;
+    private final float[] vaderModel = new float[16];
+    private Butterfly butterfly;
+    private final float[] butterflyModel = new float[16];
     private float[] viewMatrix = new float[16];
     private float[] projMatrix = new float[16];
     private float[] mvpMatrix = new float[16];
@@ -31,7 +34,7 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
     public float mAngleY = 0f;
 
     public float lightAngleX = 30f;
-    public float lightAngleY = 45f; 
+    public float lightAngleY = 45f;
     public float spotlightAngle = 20f;
     private static final float LIGHT_RADIUS = 6f;
 
@@ -47,6 +50,7 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         mMainScoop = new Sphere(0.6f, 30, 30);
         mEarScoop = new Sphere(0.35f, 20, 20);
         pared = new Cube();
+        butterfly = new Butterfly();
     }
 
     @Override
@@ -88,25 +92,31 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
 
 
         Matrix.setIdentityM(mModelMatrix, 0);
-        Matrix.setIdentityM(mModelMatrix, 0);
-        Matrix.translateM(mModelMatrix, 0, 0f, 0.5f, 0f);
         Matrix.rotateM(mModelMatrix, 0, mAngleX, 0f, 1f, 0f);
         Matrix.rotateM(mModelMatrix, 0, mAngleY, 1f, 0f, 0f);
+        Matrix.translateM(mModelMatrix, 0, 0f, 0.5f, 0f);
         Matrix.scaleM(mModelMatrix, 0, 0.9f, 0.7f, 0.02f);
         Matrix.multiplyMM(mTemporaryMatrix, 0, viewMatrix, 0, mModelMatrix, 0);
         Matrix.multiplyMM(mTemporaryMatrix, 0, projMatrix, 0, mTemporaryMatrix, 0);
         pared.draw(mTemporaryMatrix, mModelMatrix, lightPos, spotlightAngle);
 
         Matrix.setIdentityM(mModelMatrix, 0);
-        Matrix.translateM(mModelMatrix, 0, 0f, 0.8f, 0f);
         Matrix.rotateM(mModelMatrix, 0, mAngleX, 0f, 1f, 0f);
         Matrix.rotateM(mModelMatrix, 0, mAngleY, 1f, 0f, 0f);
+        Matrix.translateM(mModelMatrix, 0, 0f, 0.8f, 0f);
         Matrix.rotateM(mModelMatrix, 0, 90f, 0f, 0f, 1f);   // rota 90° para que quede perpendicular al primero
         Matrix.scaleM(mModelMatrix, 0, 0.5f, 0.02f, 0.9f);
         Matrix.multiplyMM(mTemporaryMatrix, 0, viewMatrix, 0, mModelMatrix, 0);
         Matrix.multiplyMM(mTemporaryMatrix, 0, projMatrix, 0, mTemporaryMatrix, 0);
         pared.draw(mTemporaryMatrix, mModelMatrix, lightPos, spotlightAngle);
 
-
+        // ---- Mariposa en otro cuadrante ----
+        // (-0.6, 0.6) cae en el cuadrante -X/+Z; ajusta según tus paredes.
+        Matrix.setIdentityM(butterflyModel, 0);
+        Matrix.rotateM(butterflyModel, 0, mAngleX, 0f, 1f, 0f);
+        Matrix.rotateM(butterflyModel, 0, mAngleY, 1f, 0f, 0f);
+        Matrix.translateM(butterflyModel, 0, .6f, 0.5f, 0.6f);
+        Matrix.scaleM(butterflyModel, 0, 0.6f, 0.6f, 0.6f);
+        butterfly.draw(viewMatrix, projMatrix, butterflyModel, lightPos, spotlightAngle);
     }
 }

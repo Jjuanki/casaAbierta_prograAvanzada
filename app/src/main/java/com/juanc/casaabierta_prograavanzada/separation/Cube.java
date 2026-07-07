@@ -2,13 +2,14 @@ package com.juanc.casaabierta_prograavanzada.separation;
 import android.opengl.GLES20;
 
 import com.juanc.casaabierta_prograavanzada.ShaderUtils;
+import com.juanc.casaabierta_prograavanzada.SpotlitShape;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
-public class Cube {
+public class Cube implements SpotlitShape {
 
     private final String vertexShaderCode =
             "attribute vec4 aPosition;" +
@@ -85,16 +86,18 @@ public class Cube {
     private static final float SIZE = 1.5f; // "radio" == media arista, analogo a RADIUS de la esfera
 
     public Cube() {
+        this(0.08f, 0.18f, 0.32f, 1.0f);
+    }
+
+    // Constructor con color propio: permite reusar la misma clase para paredes,
+    // cuerpo de Vader en negro, panel de pecho plateado, etc.
+    public Cube(float r, float g, float b, float a) {
         litProgram = ShaderUtils.createProgram(vertexShaderCode, fragmentShaderCode);
         lineProgram = ShaderUtils.createProgram(lineVertexShaderCode, lineFragmentShaderCode);
 
+        float[] baseColor = {r, g, b, a};
         faceColors = new float[][]{
-                {0.08f, 0.18f, 0.32f, 1.0f}, // naranja  - +X
-                {0.08f, 0.18f, 0.32f, 1.0f}, // crema    - -X
-                {0.08f, 0.18f, 0.32f, 1.0f}, // naranja  - +Y
-                {0.08f, 0.18f, 0.32f, 1.0f}, // crema    - -Y
-                {0.08f, 0.18f, 0.32f, 1.0f}, // azul     - +Z
-                {0.08f, 0.18f, 0.32f, 1.0f}  // azul oscuro - -Z
+                baseColor, baseColor, baseColor, baseColor, baseColor, baseColor
         };
 
         // 6 caras x 4 vertices x 3 componentes
