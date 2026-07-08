@@ -101,12 +101,11 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
                 "  GGGGRRRRRWWRRR"
         };
 
-        float cellSize = 0.12f;
-        float depth = 0.12f;
-        // Centrado horizontalmente (16 columnas * cellSize), parado sobre la isla (tapa en y=0)
-        float originX = -(rows[0].length() * cellSize) / 2f;
-        float originY = 1.9f;
-        float originZ = 0f;
+        float cellSize = 0.07f;   // antes 0.12f — lo hace más pequeño
+        float depth = 0.07f;      // antes 0.12f — mismo factor para que no se vea "aplastado"
+        float originX = -(rows[0].length() * cellSize) / 2f - 0.6f;
+        float originY = 1.3f;      // antes 1.9f — un poco más abajo, ya que ahora es más chico
+        float originZ = -0.6f;
 
         return new PixelArtFigure(rows, palette, cellSize, depth, originX, originY, originZ);
     }
