@@ -30,7 +30,6 @@ public class Sunflower {
         leaf = new SpotlitSphere(0.08f, 0.55f, 0.12f, 1.0f);
 
 
-        // Si tu Cube usa RGBA, este tallo será verde.
         stem = new Cube(0.08f, 0.45f, 0.08f, 1.0f);
 
 
