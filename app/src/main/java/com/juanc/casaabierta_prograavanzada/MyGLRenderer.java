@@ -4,49 +4,102 @@ import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 
-import com.juanc.casaabierta_prograavanzada.figura1.Cone;
-import com.juanc.casaabierta_prograavanzada.figura1.Sphere;
+import com.juanc.casaabierta_prograavanzada.dragon.PixelArtFigure;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-public class MyGLRenderer implements GLSurfaceView.Renderer {
-    private Cone mCone;
-    private Sphere mMainScoop;
-    private Sphere mEarScoop;
 
-    private final float[] mModelMatrix = new float[16];
-    private final float[] mTemporaryMatrix = new float[16];
+
+
+
+
+public class MyGLRenderer implements GLSurfaceView.Renderer {
 
     private HemiSphere hemisphere;
     private Cylinder cylinder;
+    private PixelArtFigure dragon;
 
     private float[] viewMatrix = new float[16];
     private float[] projMatrix = new float[16];
     private float[] mvpMatrix = new float[16];
     private float[] modelMatrix = new float[16];
 
-    // Rotacion del modelo, controlada por MyGLSurfaceView (1 dedo)
+    // Rotacion del modelo (controlada con 1 dedo, ver MyGLSurfaceView)
     public float mAngleX = 0f;
     public float mAngleY = 0f;
 
-    // Angulo de la luz, controlado por MyGLSurfaceView (2 dedos)
+    // Pan del escenario en X/Y. Disponible por si conectas algun gesto a esto.
+    public float mPanX = 0f;
+    public float mPanY = 0f;
+
+    // Zoom del escenario. Disponible por si conectas algun gesto a esto (ej. 3 dedos).
+    public float mScale = 1f;
+    public static final float MIN_SCALE = 0.3f;
+    public static final float MAX_SCALE = 3.0f;
+
+    // Posicion de la luz (2 dedos, arrastrar = mover a cualquier parte de la pantalla)
     public float lightAngleX = 30f; // "altura" de la luz (latitud)
     public float lightAngleY = 45f; // giro alrededor de la escena (longitud)
-    public float spotlightAngle = 20f; // Tamaño del foco (cono)
+
+    // Tamaño del cono de luz (2 dedos, pellizcar)
+    public float spotlightAngle = 20f;
+    public static final float MIN_SPOT_ANGLE = 5f;
+    public static final float MAX_SPOT_ANGLE = 60f;
+
     private static final float LIGHT_RADIUS = 6f;
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        GLES20.glClearColor(0.4f, 0.6f, 0.7f, 1f); // color cielo de fondo
+        GLES20.glClearColor(0f, 0f, 0f, 1f);
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
         hemisphere = new HemiSphere();
         cylinder = new Cylinder();
+        dragon = buildDragonFigure();
+    }
 
-        mCone = new Cone(30, 0.5f, 1.2f);
-        mMainScoop = new Sphere(0.6f, 30, 30);
-        mEarScoop = new Sphere(0.35f, 20, 20);
+    /**
+     * Dragoncito (Bub)
+     */
+    private PixelArtFigure buildDragonFigure() {
+        Map<Character, float[]> palette = new HashMap<>();
+        palette.put('Y', new float[]{0.97f, 0.77f, 0.13f, 1.0f});
+        palette.put('G', new float[]{0.54f, 0.76f, 0.35f, 1.0f});
+        palette.put('W', new float[]{1.00f, 1.00f, 1.00f, 1.0f});
+        palette.put('K', new float[]{0.05f, 0.05f, 0.05f, 1.0f});
+        palette.put('R', new float[]{0.90f, 0.32f, 0.33f, 1.0f});
+
+        String[] rows = {
+                "        Y       ",
+                "       YYY      ",
+                "   YYYYGGGGG    ",
+                "    YYGGGGGGG   ",
+                "     GGGGWWGWG  ",
+                "  YYYGGGWWKGKW  ",
+                "   YGGGGWWKGKW  ",
+                "    GGYYWWKGKWG ",
+                "    GYYYWWKGKWY ",
+                "    GGKYGWWGWGG ",
+                "    GRGKKKKWKK  ",
+                "   GRRRGGGGGGG  ",
+                "G  GRRRGGWWWW   ",
+                "GYYGRRGGWWWWWW  ",
+                " GGGGGGRRRWWWW  ",
+                "  GGGGRRRRRWWRRR"
+        };
+
+        float cellSize = 0.12f;
+        float depth = 0.12f;
+        // Centrado horizontalmente (16 columnas * cellSize), parado sobre la isla (tapa en y=0)
+        float originX = -(rows[0].length() * cellSize) / 2f;
+        float originY = 1.9f;
+        float originZ = 0f;
+
+        return new PixelArtFigure(rows, palette, cellSize, depth, originX, originY, originZ);
     }
 
     @Override
@@ -65,7 +118,10 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
                 0f, -1f, 0f,
                 0f, 1f, 0f);
 
+        // Orden: pan -> escala -> rotacion.
         Matrix.setIdentityM(modelMatrix, 0);
+        Matrix.translateM(modelMatrix, 0, mPanX, mPanY, 0f);
+        Matrix.scaleM(modelMatrix, 0, mScale, mScale, mScale);
         Matrix.rotateM(modelMatrix, 0, mAngleX, 0f, 1f, 0f);
         Matrix.rotateM(modelMatrix, 0, mAngleY, 1f, 0f, 0f);
 
@@ -73,7 +129,6 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         Matrix.multiplyMM(mvpMatrix, 0, projMatrix, 0, mvpMatrix, 0);
 
         // ---- Calcular la posicion de la luz en base a los angulos controlados por el usuario ----
-        // Limitar la latitud para que no se "invierta" al pasar los polos
         if (lightAngleX > 89f) lightAngleX = 89f;
         if (lightAngleX < -89f) lightAngleX = -89f;
 
@@ -87,39 +142,6 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
 
         hemisphere.draw(mvpMatrix, modelMatrix, lightPos, spotlightAngle);
         cylinder.draw(mvpMatrix, modelMatrix, lightPos, spotlightAngle);
-
-        // ... (Aquí va tu código que calcula la posición de la luz: lightX, lightY, lightZ, lightPos) ...
-
-// ==========================================
-// 1. CONO (BASE)
-// ==========================================
-        android.opengl.Matrix.setIdentityM(mModelMatrix, 0);
-        android.opengl.Matrix.translateM(mModelMatrix, 0, 0.0f, 0.6f, 0.0f);
-        android.opengl.Matrix.multiplyMM(mTemporaryMatrix, 0, mvpMatrix, 0, mModelMatrix, 0);
-        mCone.draw(mTemporaryMatrix, lightPos); // <--- Le pasamos tu variable lightPos
-
-// ==========================================
-// 2. BOLA CENTRAL (CABEZA)
-// ==========================================
-        android.opengl.Matrix.setIdentityM(mModelMatrix, 0);
-        android.opengl.Matrix.translateM(mModelMatrix, 0, 0.0f, 1.2f, 0.0f);
-        android.opengl.Matrix.multiplyMM(mTemporaryMatrix, 0, mvpMatrix, 0, mModelMatrix, 0);
-        mMainScoop.draw(mTemporaryMatrix, lightPos); // <--- Le pasamos tu variable lightPos
-
-// ==========================================
-// 3. OREJA IZQUIERDA
-// ==========================================
-        android.opengl.Matrix.setIdentityM(mModelMatrix, 0);
-        android.opengl.Matrix.translateM(mModelMatrix, 0, -0.45f, 1.7f, 0.0f);
-        android.opengl.Matrix.multiplyMM(mTemporaryMatrix, 0, mvpMatrix, 0, mModelMatrix, 0);
-        mEarScoop.draw(mTemporaryMatrix, lightPos); // <--- Le pasamos tu variable lightPos
-
-// ==========================================
-// 4. OREJA DERECHA
-// ==========================================
-        android.opengl.Matrix.setIdentityM(mModelMatrix, 0);
-        android.opengl.Matrix.translateM(mModelMatrix, 0, 0.45f, 1.7f, 0.0f);
-        android.opengl.Matrix.multiplyMM(mTemporaryMatrix, 0, mvpMatrix, 0, mModelMatrix, 0);
-        mEarScoop.draw(mTemporaryMatrix, lightPos); // <--- Le pasamos tu variable lightPos
+        dragon.draw(mvpMatrix, modelMatrix, lightPos, spotlightAngle);
     }
 }

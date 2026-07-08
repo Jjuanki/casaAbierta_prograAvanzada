@@ -8,50 +8,8 @@ import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class HemiSphere {
-
-    // ---- Shader con iluminacion tipo spotlight (igual esquema que Pyramid) ----
-    private final String vertexShaderCode =
-            "attribute vec4 aPosition;" +
-                    "attribute vec3 aNormal;" +
-                    "uniform mat4 uMVPMatrix;" +
-                    "uniform mat4 uModelMatrix;" +
-                    "varying vec3 vNormal;" +
-                    "varying vec3 vPosition;" +
-                    "void main() {" +
-                    "  vec4 worldPos = uModelMatrix * aPosition;" +
-                    "  vPosition = worldPos.xyz;" +
-                    "  vNormal = mat3(uModelMatrix) * aNormal;" +
-                    "  gl_Position = uMVPMatrix * aPosition;" +
-                    "}";
-
-    private final String fragmentShaderCode =
-            "precision mediump float;" +
-                    "uniform vec3 uLightPos;" +
-                    "uniform vec3 uLightDir;" +
-                    "uniform vec3 uEyePos;" +
-                    "uniform float uCutOff;" +
-                    "uniform vec4 uColor;" +
-                    "varying vec3 vNormal;" +
-                    "varying vec3 vPosition;" +
-                    "void main() {" +
-                    "  vec3 normalN = normalize(vNormal);" +
-                    "  vec3 lightDir = normalize(uLightPos - vPosition);" +
-                    "  float theta = dot(lightDir, normalize(-uLightDir));" +
-                    "  vec3 ambient = uColor.rgb * 0.25;" +
-                    "  vec3 diffuse = vec3(0.0);" +
-                    "  vec3 specular = vec3(0.0);" +
-                    "  if (theta > uCutOff) {" +
-                    "    float diff = max(dot(normalN, lightDir), 0.0);" +
-                    "    diffuse = diff * uColor.rgb;" +
-                    "    vec3 viewDir = normalize(uEyePos - vPosition);" +
-                    "    vec3 reflectDir = reflect(-lightDir, normalN);" +
-                    "    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 16.0);" +
-                    "    specular = spec * vec3(0.4);" +
-                    "  }" +
-                    "  vec3 result = ambient + diffuse + specular;" +
-                    "  gl_FragColor = vec4(result, uColor.a);" +
-                    "}";
 
     // Shader simple (sin luz) solo para las lineas divisorias entre bandas
     private final String lineVertexShaderCode =
@@ -97,12 +55,8 @@ public class HemiSphere {
     private static final int LAT_SEGMENTS = NUM_BANDS * SEGMENTS_PER_BAND;
     private static final int LON_SEGMENTS = 20;       // divisiones alrededor
 
-    // ---- Spotlight (mismo esquema que Pyramid) ----
-    // private float spotlightAngle = 20f, angleDelta = 0.1f;
-    // private final float minAngle = 2f, maxAngle = 20f;
-
     public HemiSphere() {
-        litProgram = ShaderUtils.createProgram(vertexShaderCode, fragmentShaderCode);
+        litProgram = ShaderUtils.createProgram(ShaderUtils.LIT_VERTEX_SHADER, ShaderUtils.LIT_FRAGMENT_SHADER);
         lineProgram = ShaderUtils.createProgram(lineVertexShaderCode, lineFragmentShaderCode);
 
         // Colores de las franjas, de arriba (ecuador) hacia abajo (punta) - intercalados
@@ -240,19 +194,9 @@ public class HemiSphere {
         GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(litProgram, "uModelMatrix"), 1, false, modelMatrix, 0);
         GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(litProgram, "uMVPMatrix"), 1, false, mvpMatrix, 0);
 
-        // La luz apunta siempre hacia el centro de la escena (como una linterna que sigue al objeto)
-        float dirX = -lightPos[0], dirY = -lightPos[1], dirZ = -lightPos[2];
-        float len = (float) Math.sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ);
-        if (len > 0f) { dirX /= len; dirY /= len; dirZ /= len; }
-
-        GLES20.glUniform3f(GLES20.glGetUniformLocation(litProgram, "uLightPos"), lightPos[0], lightPos[1], lightPos[2]);
-        GLES20.glUniform3f(GLES20.glGetUniformLocation(litProgram, "uLightDir"), dirX, dirY, dirZ);
-        GLES20.glUniform3f(GLES20.glGetUniformLocation(litProgram, "uEyePos"), 0f, 1f, 8f);
-        float cutOff = (float) Math.cos(Math.toRadians(spotlightAngle));
-        GLES20.glUniform1f(GLES20.glGetUniformLocation(litProgram, "uCutOff"), cutOff);
-
-        // spotlightAngle += angleDelta;
-        // if (spotlightAngle > maxAngle || spotlightAngle < minAngle) angleDelta *= -1;
+        // Borde interior al 60% del angulo total -> transicion suave en vez de un corte duro
+        float innerAngle = spotlightAngle * 0.6f;
+        ShaderUtils.applyLightUniforms(litProgram, lightPos, spotlightAngle, innerAngle, new float[]{0f, 1f, 8f});
 
         GLES20.glEnableVertexAttribArray(aPosition);
         GLES20.glEnableVertexAttribArray(aNormal);
