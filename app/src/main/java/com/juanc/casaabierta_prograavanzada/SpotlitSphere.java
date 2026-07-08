@@ -6,11 +6,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
-/**
- * Esfera unitaria (radio 1) con el mismo shader tipo spotlight que Cube.
- * Para usarla como óvalo (alas de la mariposa) o como bolita (cuerpo),
- * se le aplica una escala no uniforme en la matriz modelo antes de dibujarla.
- */
 public class SpotlitSphere implements SpotlitShape {
 
     private final String vertexShaderCode =
