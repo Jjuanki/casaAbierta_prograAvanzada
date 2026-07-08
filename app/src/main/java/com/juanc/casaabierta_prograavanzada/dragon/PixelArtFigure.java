@@ -21,13 +21,7 @@ public class PixelArtFigure {
     private final float depth;
     private final float originX, originY, originZ;
 
-    /**
-     * @param rows      filas de texto (todas del mismo largo); un espacio ' ' significa "sin bloque"
-     * @param palette   mapa caracter -> color RGBA
-     * @param cellSize  tamaño de cada "pixel" en unidades del mundo (ancho/alto)
-     * @param depth     grosor de la figura en Z (que tan "plana" o "gruesa" se ve)
-     * @param originX/Y/Z posicion en el mundo de la esquina superior-izquierda de la grilla
-     */
+
     public PixelArtFigure(String[] rows, Map<Character, float[]> palette,
                           float cellSize, float depth,
                           float originX, float originY, float originZ) {
