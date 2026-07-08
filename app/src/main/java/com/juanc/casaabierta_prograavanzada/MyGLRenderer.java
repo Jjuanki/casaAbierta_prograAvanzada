@@ -4,20 +4,17 @@ import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 
-import com.juanc.casaabierta_prograavanzada.figura1.Cone;
-import com.juanc.casaabierta_prograavanzada.figura1.Sphere;
 import com.juanc.casaabierta_prograavanzada.separation.Cube;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 public class MyGLRenderer implements GLSurfaceView.Renderer {
-    private Cone mCone;
-    private Sphere mMainScoop;
-    private Sphere mEarScoop;
 
     private final float[] mModelMatrix = new float[16];
     private final float[] mTemporaryMatrix = new float[16];
+    private Sunflower sunflower;
+    private final float[] sunflowerModel = new float[16];
 
     private HemiSphere hemisphere;
     private Cylinder cylinder;
@@ -45,10 +42,9 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
 
         hemisphere = new HemiSphere();
         cylinder = new Cylinder();
+        sunflower = new Sunflower();
 
-        mCone = new Cone(30, 0.5f, 1.2f);
-        mMainScoop = new Sphere(0.6f, 30, 30);
-        mEarScoop = new Sphere(0.35f, 20, 20);
+
         pared = new Cube();
         butterfly = new Butterfly();
     }
@@ -118,5 +114,15 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         Matrix.translateM(butterflyModel, 0, .6f, 0.5f, 0.6f);
         Matrix.scaleM(butterflyModel, 0, 0.6f, 0.6f, 0.6f);
         butterfly.draw(viewMatrix, projMatrix, butterflyModel, lightPos, spotlightAngle);
+
+        // ---- Girasol en el cuadrante
+        Matrix.setIdentityM(sunflowerModel, 0);
+        Matrix.rotateM(sunflowerModel, 0, mAngleX, 0f, 1f, 0f);
+        Matrix.rotateM(sunflowerModel, 0, mAngleY, 1f, 0f, 0f);
+        Matrix.translateM(sunflowerModel, 0, -0.65f, 1.0f, 0.60f);
+        Matrix.scaleM(sunflowerModel, 0, 0.58f, 0.58f, 0.58f);
+        sunflower.draw(viewMatrix, projMatrix, sunflowerModel, lightPos, spotlightAngle);
+
+
     }
 }
