@@ -5,6 +5,7 @@ import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 
 import com.juanc.casaabierta_prograavanzada.dragon.PixelArtFigure;
+import com.juanc.casaabierta_prograavanzada.separation.Cube;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,16 +13,20 @@ import java.util.Map;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-
-
-
-
-
 public class MyGLRenderer implements GLSurfaceView.Renderer {
+
+    private final float[] mModelMatrix = new float[16];
+    private final float[] mTemporaryMatrix = new float[16];
 
     private HemiSphere hemisphere;
     private Cylinder cylinder;
     private PixelArtFigure dragon;
+
+    private Sunflower sunflower;
+    private final float[] sunflowerModel = new float[16];
+    private Cube pared;
+    private Butterfly butterfly;
+    private final float[] butterflyModel = new float[16];
 
     private float[] viewMatrix = new float[16];
     private float[] projMatrix = new float[16];
@@ -54,12 +59,16 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        GLES20.glClearColor(0f, 0f, 0f, 1f);
+        GLES20.glClearColor(0f, 0f, 0f, 1f); // fondo negro: todo se revela con la luz
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
         hemisphere = new HemiSphere();
         cylinder = new Cylinder();
         dragon = buildDragonFigure();
+
+        sunflower = new Sunflower();
+        pared = new Cube();
+        butterfly = new Butterfly();
     }
 
     /**
@@ -114,7 +123,7 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
         Matrix.setLookAtM(viewMatrix, 0,
-                0f, 3f, 8f,
+                0f, 3f, 9f,
                 0f, -1f, 0f,
                 0f, 1f, 0f);
 
@@ -143,5 +152,42 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         hemisphere.draw(mvpMatrix, modelMatrix, lightPos, spotlightAngle);
         cylinder.draw(mvpMatrix, modelMatrix, lightPos, spotlightAngle);
         dragon.draw(mvpMatrix, modelMatrix, lightPos, spotlightAngle);
+
+        // ---- Pared 1 ----
+        Matrix.setIdentityM(mModelMatrix, 0);
+        Matrix.rotateM(mModelMatrix, 0, mAngleX, 0f, 1f, 0f);
+        Matrix.rotateM(mModelMatrix, 0, mAngleY, 1f, 0f, 0f);
+        Matrix.translateM(mModelMatrix, 0, 0f, 0.5f, 0f);
+        Matrix.scaleM(mModelMatrix, 0, 0.9f, 0.7f, 0.02f);
+        Matrix.multiplyMM(mTemporaryMatrix, 0, viewMatrix, 0, mModelMatrix, 0);
+        Matrix.multiplyMM(mTemporaryMatrix, 0, projMatrix, 0, mTemporaryMatrix, 0);
+        pared.draw(mTemporaryMatrix, mModelMatrix, lightPos, spotlightAngle);
+
+        // ---- Pared 2 (perpendicular a la primera) ----
+        Matrix.setIdentityM(mModelMatrix, 0);
+        Matrix.rotateM(mModelMatrix, 0, mAngleX, 0f, 1f, 0f);
+        Matrix.rotateM(mModelMatrix, 0, mAngleY, 1f, 0f, 0f);
+        Matrix.translateM(mModelMatrix, 0, 0f, 0.8f, 0f);
+        Matrix.rotateM(mModelMatrix, 0, 90f, 0f, 0f, 1f);
+        Matrix.scaleM(mModelMatrix, 0, 0.5f, 0.02f, 0.9f);
+        Matrix.multiplyMM(mTemporaryMatrix, 0, viewMatrix, 0, mModelMatrix, 0);
+        Matrix.multiplyMM(mTemporaryMatrix, 0, projMatrix, 0, mTemporaryMatrix, 0);
+        pared.draw(mTemporaryMatrix, mModelMatrix, lightPos, spotlightAngle);
+
+        // ---- Mariposa en otro cuadrante ----
+        Matrix.setIdentityM(butterflyModel, 0);
+        Matrix.rotateM(butterflyModel, 0, mAngleX, 0f, 1f, 0f);
+        Matrix.rotateM(butterflyModel, 0, mAngleY, 1f, 0f, 0f);
+        Matrix.translateM(butterflyModel, 0, .6f, 0.5f, 0.6f);
+        Matrix.scaleM(butterflyModel, 0, 0.6f, 0.6f, 0.6f);
+        butterfly.draw(viewMatrix, projMatrix, butterflyModel, lightPos, spotlightAngle);
+
+        // ---- Girasol ----
+        Matrix.setIdentityM(sunflowerModel, 0);
+        Matrix.rotateM(sunflowerModel, 0, mAngleX, 0f, 1f, 0f);
+        Matrix.rotateM(sunflowerModel, 0, mAngleY, 1f, 0f, 0f);
+        Matrix.translateM(sunflowerModel, 0, -0.65f, 1.0f, 0.60f);
+        Matrix.scaleM(sunflowerModel, 0, 0.58f, 0.58f, 0.58f);
+        sunflower.draw(viewMatrix, projMatrix, sunflowerModel, lightPos, spotlightAngle);
     }
 }
