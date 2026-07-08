@@ -7,18 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Convierte una grilla de texto (cada caracter = un "pixel"/voxel) en una figura 3D
- * hecha de cubos, con la misma iluminacion tipo spotlight que el resto de la escena
- * (o sea: no se ve nada hasta que la luz le pega).
- *
- * Uso:
- *   Map<Character,float[]> paleta = new HashMap<>();
- *   paleta.put('G', new float[]{0.3f,0.7f,0.3f,1f});
- *   String[] filas = { " G ", "GGG", " G " };
- *   PixelArtFigure figura = new PixelArtFigure(filas, paleta, 0.12f, 0.12f, -0.5f, 1.5f, 0f);
- *   // en onDrawFrame: figura.draw(mvpMatrix, modelMatrix, lightPos, spotlightAngle);
- */
 public class PixelArtFigure {
 
     private static class Cell {
