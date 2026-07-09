@@ -4,8 +4,9 @@ import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 
-import com.juanc.casaabierta_prograavanzada.dragon.PixelArtFigure;
-import com.juanc.casaabierta_prograavanzada.separation.Cube;
+import com.juanc.casaabierta_prograavanzada.Dibujos.Butterfly;
+import com.juanc.casaabierta_prograavanzada.Dibujos.PixelArtFigure;
+import com.juanc.casaabierta_prograavanzada.Dibujos.Sunflower;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,6 +18,7 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
 
     private final float[] mModelMatrix = new float[16];
     private final float[] mTemporaryMatrix = new float[16];
+    private final float[] localMatrix = new float[16]; // transform local (traslacion+escala) de cada pieza
 
     private HemiSphere hemisphere;
     private Cylinder cylinder;
@@ -153,40 +155,36 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         dragon.draw(mvpMatrix, modelMatrix, lightPos, spotlightAngle);
 
         // ---- Pared 1 ----
-        Matrix.setIdentityM(mModelMatrix, 0);
-        Matrix.rotateM(mModelMatrix, 0, mAngleX, 0f, 1f, 0f);
-        Matrix.rotateM(mModelMatrix, 0, mAngleY, 1f, 0f, 0f);
-        Matrix.translateM(mModelMatrix, 0, 0f, 0.5f, 0f);
-        Matrix.scaleM(mModelMatrix, 0, 0.9f, 0.7f, 0.02f);
-        Matrix.multiplyMM(mTemporaryMatrix, 0, viewMatrix, 0, mModelMatrix, 0);
-        Matrix.multiplyMM(mTemporaryMatrix, 0, projMatrix, 0, mTemporaryMatrix, 0);
+        // NOTA: escalas x3 respecto a la version anterior porque el Cube unificado
+        // ahora es de -0.5 a 0.5 (antes era de -1.5 a 1.5 en la version de "separation").
+        Matrix.setIdentityM(localMatrix, 0);
+        Matrix.translateM(localMatrix, 0, 0f, 0.5f, 0f);
+        Matrix.scaleM(localMatrix, 0, 2.7f, 2.1f, 0.06f);
+        Matrix.multiplyMM(mModelMatrix, 0, modelMatrix, 0, localMatrix, 0);
+        Matrix.multiplyMM(mTemporaryMatrix, 0, mvpMatrix, 0, localMatrix, 0);
         pared.draw(mTemporaryMatrix, mModelMatrix, lightPos, spotlightAngle);
 
         // ---- Pared 2 (perpendicular a la primera) ----
-        Matrix.setIdentityM(mModelMatrix, 0);
-        Matrix.rotateM(mModelMatrix, 0, mAngleX, 0f, 1f, 0f);
-        Matrix.rotateM(mModelMatrix, 0, mAngleY, 1f, 0f, 0f);
-        Matrix.translateM(mModelMatrix, 0, 0f, 0.8f, 0f);
-        Matrix.rotateM(mModelMatrix, 0, 90f, 0f, 0f, 1f);
-        Matrix.scaleM(mModelMatrix, 0, 0.5f, 0.02f, 0.9f);
-        Matrix.multiplyMM(mTemporaryMatrix, 0, viewMatrix, 0, mModelMatrix, 0);
-        Matrix.multiplyMM(mTemporaryMatrix, 0, projMatrix, 0, mTemporaryMatrix, 0);
+        Matrix.setIdentityM(localMatrix, 0);
+        Matrix.translateM(localMatrix, 0, 0f, 0.8f, 0f);
+        Matrix.rotateM(localMatrix, 0, 90f, 0f, 0f, 1f);
+        Matrix.scaleM(localMatrix, 0, 1.5f, 0.06f, 2.7f);
+        Matrix.multiplyMM(mModelMatrix, 0, modelMatrix, 0, localMatrix, 0);
+        Matrix.multiplyMM(mTemporaryMatrix, 0, mvpMatrix, 0, localMatrix, 0);
         pared.draw(mTemporaryMatrix, mModelMatrix, lightPos, spotlightAngle);
 
         // ---- Mariposa en otro cuadrante ----
-        Matrix.setIdentityM(butterflyModel, 0);
-        Matrix.rotateM(butterflyModel, 0, mAngleX, 0f, 1f, 0f);
-        Matrix.rotateM(butterflyModel, 0, mAngleY, 1f, 0f, 0f);
-        Matrix.translateM(butterflyModel, 0, .6f, 0.5f, 0.6f);
-        Matrix.scaleM(butterflyModel, 0, 0.6f, 0.6f, 0.6f);
+        Matrix.setIdentityM(localMatrix, 0);
+        Matrix.translateM(localMatrix, 0, .6f, 0.5f, 0.6f);
+        Matrix.scaleM(localMatrix, 0, 0.6f, 0.6f, 0.6f);
+        Matrix.multiplyMM(butterflyModel, 0, modelMatrix, 0, localMatrix, 0);
         butterfly.draw(viewMatrix, projMatrix, butterflyModel, lightPos, spotlightAngle);
 
         // ---- Girasol ----
-        Matrix.setIdentityM(sunflowerModel, 0);
-        Matrix.rotateM(sunflowerModel, 0, mAngleX, 0f, 1f, 0f);
-        Matrix.rotateM(sunflowerModel, 0, mAngleY, 1f, 0f, 0f);
-        Matrix.translateM(sunflowerModel, 0, -0.65f, 1.0f, 0.60f);
-        Matrix.scaleM(sunflowerModel, 0, 0.58f, 0.58f, 0.58f);
+        Matrix.setIdentityM(localMatrix, 0);
+        Matrix.translateM(localMatrix, 0, -0.65f, 1.0f, 0.60f);
+        Matrix.scaleM(localMatrix, 0, 0.58f, 0.58f, 0.58f);
+        Matrix.multiplyMM(sunflowerModel, 0, modelMatrix, 0, localMatrix, 0);
         sunflower.draw(viewMatrix, projMatrix, sunflowerModel, lightPos, spotlightAngle);
     }
 }

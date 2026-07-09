@@ -104,4 +104,13 @@ public class ShaderUtils {
         GLES20.glUniform1f(GLES20.glGetUniformLocation(program, "uOuterCutOff"), outerCos);
         GLES20.glUniform1f(GLES20.glGetUniformLocation(program, "uInnerCutOff"), innerCos);
     }
+
+    /**
+     * Contrato comun para cualquier figura que se dibuje con este shader de spotlight
+     * (Cube, SpotlitSphere, etc.), asi Sunflower/Butterfly pueden tener un solo
+     * drawPart() que sirva para cualquiera de las dos.
+     */
+    public interface SpotlitShape {
+        void draw(float[] mvpMatrix, float[] modelMatrix, float[] lightPos, float spotlightAngle);
+    }
 }

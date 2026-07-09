@@ -1,18 +1,11 @@
-package com.juanc.casaabierta_prograavanzada;
+package com.juanc.casaabierta_prograavanzada.Dibujos;
 
 import android.opengl.Matrix;
 
-import com.juanc.casaabierta_prograavanzada.separation.Cube;
+import com.juanc.casaabierta_prograavanzada.Cube;
+import com.juanc.casaabierta_prograavanzada.ShaderUtils;
+import com.juanc.casaabierta_prograavanzada.SpotlitSphere;
 
-/**
- * Mariposa simple: cabeza cuadrada, cuerpo como cadena de bolitas,
- * 4 alas ovaladas (esferas achatadas y rotadas) y 2 antenas
- * (varilla delgada + bolita en la punta).
- *
- * Usa la misma lógica de composición que DarthVader: una única matriz
- * "figureModel" ubica toda la mariposa, y cada parte es un offset local
- * (posición, rotación en Z y escala) dentro de esa figura.
- */
 public class Butterfly {
 
     private final Cube darkCube;          // cabeza y varillas de las antenas
@@ -52,22 +45,23 @@ public class Butterfly {
         }
 
         // ---- Cabeza: cuadrado plano ----
-        drawPart(darkCube, figureModel, 0f, 0.95f, 0f, 0f, 0.08f, 0.08f, 0.02f,
+        // NOTA: escalas x3 respecto a la version anterior porque el Cube unificado
+        // ahora es de -0.5 a 0.5 (antes era de -1.5 a 1.5 en la version de "separation").
+        drawPart(darkCube, figureModel, 0f, 0.95f, 0f, 0f, 0.24f, 0.24f, 0.06f,
                 viewMatrix, projMatrix, lightPos, spotlightAngle);
 
         // ---- Antenas: varilla + bolita en la punta ----
-        drawPart(darkCube, figureModel, 0.10f, 1.12f, 0f, -25f, 0.012f, 0.14f, 0.012f,
+        drawPart(darkCube, figureModel, 0.10f, 1.12f, 0f, -25f, 0.036f, 0.42f, 0.036f,
                 viewMatrix, projMatrix, lightPos, spotlightAngle);   // varilla derecha
         drawPart(darkBall, figureModel, 0.20f, 1.24f, 0f, 0f, 0.035f, 0.035f, 0.035f,
                 viewMatrix, projMatrix, lightPos, spotlightAngle);   // punta derecha
-
-        drawPart(darkCube, figureModel, -0.10f, 1.12f, 0f, 25f, 0.012f, 0.14f, 0.012f,
+        drawPart(darkCube, figureModel, -0.10f, 1.12f, 0f, 25f, 0.036f, 0.42f, 0.036f,
                 viewMatrix, projMatrix, lightPos, spotlightAngle);   // varilla izquierda
         drawPart(darkBall, figureModel, -0.20f, 1.24f, 0f, 0f, 0.035f, 0.035f, 0.035f,
                 viewMatrix, projMatrix, lightPos, spotlightAngle);   // punta izquierda
     }
 
-    private void drawPart(SpotlitShape shape, float[] figureModel,
+    private void drawPart(ShaderUtils.SpotlitShape shape, float[] figureModel,
                           float tx, float ty, float tz, float rotZDeg,
                           float sx, float sy, float sz,
                           float[] viewMatrix, float[] projMatrix,
@@ -81,7 +75,6 @@ public class Butterfly {
         Matrix.scaleM(localMatrix, 0, sx, sy, sz);
 
         Matrix.multiplyMM(modelMatrix, 0, figureModel, 0, localMatrix, 0);
-
         Matrix.multiplyMM(tempMatrix, 0, viewMatrix, 0, modelMatrix, 0);
         Matrix.multiplyMM(mvpMatrix, 0, projMatrix, 0, tempMatrix, 0);
 

@@ -1,15 +1,11 @@
-package com.juanc.casaabierta_prograavanzada;
+package com.juanc.casaabierta_prograavanzada.Dibujos;
+
 import android.opengl.Matrix;
-import com.juanc.casaabierta_prograavanzada.separation.Cube;
 
-/**
+import com.juanc.casaabierta_prograavanzada.Cube;
+import com.juanc.casaabierta_prograavanzada.ShaderUtils;
+import com.juanc.casaabierta_prograavanzada.SpotlitSphere;
 
- * Girasol 3D compuesto por:
- * * 12 pétalos amarillos exteriores
- * * 8 pétalos naranjas interiores
- * * Centro café
- * * Tallo y dos hojas verdes
- */
 public class Sunflower {
 
     private final SpotlitSphere yellowPetal;
@@ -29,22 +25,20 @@ public class Sunflower {
         center = new SpotlitSphere(0.30f, 0.12f, 0.03f, 1.0f);
         leaf = new SpotlitSphere(0.08f, 0.55f, 0.12f, 1.0f);
 
-
         // Si tu Cube usa RGBA, este tallo será verde.
         stem = new Cube(0.08f, 0.45f, 0.08f, 1.0f);
-
-
     }
 
     public void draw(float[] viewMatrix, float[] projMatrix, float[] figureModel,
                      float[] lightPos, float spotlightAngle) {
 
-
         // ---- Tallo ----
+        // NOTA: escala x3 respecto a la version anterior porque el Cube unificado
+        // ahora es de -0.5 a 0.5 (antes era de -1.5 a 1.5 en la version de "separation").
         drawPart(stem, figureModel,
                 0f, -0.80f, 0f,
                 0f,
-                0.055f, 0.80f, 0.055f,
+                0.165f, 2.40f, 0.165f,
                 viewMatrix, projMatrix, lightPos, spotlightAngle);
 
         // ---- Hojas ----
@@ -111,16 +105,13 @@ public class Sunflower {
                     0.035f, 0.035f, 0.025f,
                     viewMatrix, projMatrix, lightPos, spotlightAngle);
         }
-
-
     }
 
-    private void drawPart(SpotlitShape shape, float[] figureModel,
+    private void drawPart(ShaderUtils.SpotlitShape shape, float[] figureModel,
                           float tx, float ty, float tz, float rotZDeg,
                           float sx, float sy, float sz,
                           float[] viewMatrix, float[] projMatrix,
                           float[] lightPos, float spotlightAngle) {
-
 
         Matrix.setIdentityM(localMatrix, 0);
         Matrix.translateM(localMatrix, 0, tx, ty, tz);
@@ -133,7 +124,5 @@ public class Sunflower {
         Matrix.multiplyMM(mvpMatrix, 0, projMatrix, 0, tempMatrix, 0);
 
         shape.draw(mvpMatrix, modelMatrix, lightPos, spotlightAngle);
-
-
     }
 }
