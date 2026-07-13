@@ -6,6 +6,7 @@ import android.opengl.Matrix;
 
 import com.juanc.casaabierta_prograavanzada.Dibujos.Butterfly;
 import com.juanc.casaabierta_prograavanzada.Dibujos.PixelArtFigure;
+import com.juanc.casaabierta_prograavanzada.Dibujos.Rocket;
 import com.juanc.casaabierta_prograavanzada.Dibujos.Sunflower;
 
 import java.util.HashMap;
@@ -23,7 +24,8 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
     private HemiSphere hemisphere;
     private Cylinder cylinder;
     private PixelArtFigure dragon;
-
+    private Rocket rocket;
+    private final float[] rocketModel = new float[16];
     private Sunflower sunflower;
     private final float[] sunflowerModel = new float[16];
     private Cube pared;
@@ -70,7 +72,7 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         hemisphere = new HemiSphere();
         cylinder = new Cylinder();
         dragon = buildDragonFigure();
-
+        rocket = new Rocket();
         sunflower = new Sunflower();
         pared = new Cube();
         butterfly = new Butterfly();
@@ -193,5 +195,14 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         Matrix.scaleM(localMatrix, 0, 0.58f, 0.58f, 0.58f);
         Matrix.multiplyMM(sunflowerModel, 0, modelMatrix, 0, localMatrix, 0);
         sunflower.draw(viewMatrix, projMatrix, sunflowerModel, lightPos, effectiveSpotAngle);
+
+        // en onDrawFrame, junto a las otras figuras:
+        Matrix.setIdentityM(localMatrix, 0);
+        Matrix.translateM(localMatrix, 0, 0.65f, 1.0f, -0.60f); // tu coordenada
+        Matrix.rotateM(localMatrix, 0, 133f, 0f, 1f, 0f);  // gira para "mirar" hacia el cuadrante X+ Z-
+        Matrix.rotateM(localMatrix, 0, -25f, 1f, 0f, 0f);  // inclina la nariz hacia afuera (no vertical)
+        Matrix.scaleM(localMatrix, 0, 1.f, 1.f, 1.f);
+        Matrix.multiplyMM(rocketModel, 0, modelMatrix, 0, localMatrix, 0);
+        rocket.draw(viewMatrix, projMatrix, rocketModel, lightPos, spotlightAngle);
     }
 }
