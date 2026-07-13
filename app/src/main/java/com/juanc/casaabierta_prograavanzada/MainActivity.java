@@ -119,6 +119,17 @@ public class MainActivity extends AppCompatActivity {
     private void setupLightControls(View controls) {
         Button btnToggleLight = controls.findViewById(R.id.btnToggleLight);
         SeekBar seekSpotAngle = controls.findViewById(R.id.seekSpotAngle);
+        Button btnCenterFigure = controls.findViewById(R.id.btnCenterFigure);
+
+        // Boton: recentra la figura. Deshace el zoom (pellizco) y el paneo, y ademas
+        // vuelve a tomar la inclinacion actual del telefono como "derecho", por si el
+        // giroscopio quedo desviado.
+        btnCenterFigure.setOnClickListener(v -> {
+            if (renderer != null) {
+                renderer.centrarFigura();
+            }
+            gyroBaselineSet = false;
+        });
 
         // Boton: prender/apagar la luz.
         btnToggleLight.setOnClickListener(v -> {

@@ -29,10 +29,11 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
     private Cube pared;
     private Butterfly butterfly;
     private final float[] butterflyModel = new float[16];
-
     // ---- Fondo dinamico (skybox) y particulas de polvo brillante ----
     private Skybox skybox;
-    private ParticleSystem dustParticles;
+    private ParticleSystem dustParticles;    // "polvo" anclado a la figura (rota/escala con ella)
+    private ParticleSystem ambientParticles; // particulas de fondo: llenan todo el escenario,
+    // sin verse afectadas por el zoom/paneo de la figura
     private final float[] skyboxMvp = new float[16];
     private long lastFrameTimeNanos = 0L;
     private float elapsedTime = 0f;
@@ -83,14 +84,27 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         butterfly = new Butterfly();
 
         skybox = new Skybox();
-        // Polvo brillante flotando alrededor de las figuras (centrado en la escena).
+
+        // Polvo brillante flotando alrededor de las figuras (anclado: rota/escala con la escena).
         dustParticles = new ParticleSystem(
-                90,                              // cantidad de particulas
+                140,                             // cantidad de particulas (antes 90)
                 0f, 1.1f, 0.25f,                 // centro (x, y, z) de la nube
-                1.5f,                             // radio horizontal
-                2.0f,                             // rango vertical (sube y reaparece abajo)
+                1.8f,                             // radio horizontal (antes 1.5)
+                2.4f,                             // rango vertical (antes 2.0)
                 new float[]{1.0f, 0.92f, 0.7f, 0.85f}, // color calido tipo "luciernaga"
                 9f                                 // tamaño del punto en pixeles
+        );
+
+        // Polvo ambiental: nube mucho mas grande que cubre TODO el escenario visible.
+        // Se dibuja solo con la matriz de camara (sin mScale/mPanX/mPanY), por lo que
+        // sigue llenando toda la pantalla aunque el usuario acerque o aleje la figura.
+        ambientParticles = new ParticleSystem(
+                160,
+                0f, 0.5f, -1.5f,
+                4.5f,                              // radio mucho mayor: cubre todo el diorama
+                7.0f,                              // rango vertical amplio
+                new float[]{0.75f, 0.85f, 1.0f, 0.5f}, // brillo frio, sutil, de fondo
+                5f
         );
     }
 
@@ -235,5 +249,23 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         // con el giroscopio igual que las figuras ----
         dustParticles.update(dt, elapsedTime);
         dustParticles.draw(mvpMatrix);
+
+        // ---- Polvo ambiental: usa solo proyeccion*camara (igual que el skybox),
+        // por lo que NO se achica ni se agranda con el pellizco de zoom de la figura.
+        // Asi, aunque el usuario acerque o aleje la figura, siempre hay particulas
+        // repartidas por todo el escenario visible. ----
+        ambientParticles.update(dt, elapsedTime);
+        ambientParticles.draw(skyboxMvp);
+    }
+
+    /**
+     * Recentra la figura: deshace cualquier zoom (pellizco de 2 dedos) y paneo
+     * acumulado, dejando el diorama en su posicion y tamaño original.
+     * (La rotacion la vuelve a calibrar MainActivity con el giroscopio.)
+     */
+    public void centrarFigura() {
+        mScale = 1f;
+        mPanX = 0f;
+        mPanY = 0f;
     }
 }
