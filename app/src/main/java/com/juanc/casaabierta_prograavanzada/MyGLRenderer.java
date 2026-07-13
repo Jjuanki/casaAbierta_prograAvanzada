@@ -6,7 +6,6 @@ import android.opengl.Matrix;
 
 import com.juanc.casaabierta_prograavanzada.Dibujos.Butterfly;
 import com.juanc.casaabierta_prograavanzada.Dibujos.PixelArtFigure;
-import com.juanc.casaabierta_prograavanzada.Dibujos.Rocket;
 import com.juanc.casaabierta_prograavanzada.Dibujos.Sunflower;
 
 import java.util.HashMap;
@@ -24,13 +23,19 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
     private HemiSphere hemisphere;
     private Cylinder cylinder;
     private PixelArtFigure dragon;
-    private Rocket rocket;
-    private final float[] rocketModel = new float[16];
+
     private Sunflower sunflower;
     private final float[] sunflowerModel = new float[16];
     private Cube pared;
     private Butterfly butterfly;
     private final float[] butterflyModel = new float[16];
+
+    // ---- Fondo dinamico (skybox) y particulas de polvo brillante ----
+    private Skybox skybox;
+    private ParticleSystem dustParticles;
+    private final float[] skyboxMvp = new float[16];
+    private long lastFrameTimeNanos = 0L;
+    private float elapsedTime = 0f;
 
     private float[] viewMatrix = new float[16];
     private float[] projMatrix = new float[16];
@@ -72,10 +77,21 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         hemisphere = new HemiSphere();
         cylinder = new Cylinder();
         dragon = buildDragonFigure();
-        rocket = new Rocket();
+
         sunflower = new Sunflower();
         pared = new Cube();
         butterfly = new Butterfly();
+
+        skybox = new Skybox();
+        // Polvo brillante flotando alrededor de las figuras (centrado en la escena).
+        dustParticles = new ParticleSystem(
+                90,                              // cantidad de particulas
+                0f, 1.1f, 0.25f,                 // centro (x, y, z) de la nube
+                1.5f,                             // radio horizontal
+                2.0f,                             // rango vertical (sube y reaparece abajo)
+                new float[]{1.0f, 0.92f, 0.7f, 0.85f}, // color calido tipo "luciernaga"
+                9f                                 // tamaño del punto en pixeles
+        );
     }
 
     /**
@@ -128,10 +144,28 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
     public void onDrawFrame(GL10 gl) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
+        // ---- Tiempo transcurrido (para animar estrellas y particulas) ----
+        long now = System.nanoTime();
+        float dt = (lastFrameTimeNanos == 0L) ? 0.016f : (now - lastFrameTimeNanos) / 1_000_000_000f;
+        lastFrameTimeNanos = now;
+        elapsedTime += dt;
+
         Matrix.setLookAtM(viewMatrix, 0,
                 0f, 3f, 9f,
                 0f, -1f, 0f,
                 0f, 1f, 0f);
+
+        // ---- Skybox: se dibuja primero, fijo (sin el modelMatrix) para que quede
+        // como un fondo que no rota con la inclinacion del telefono ----
+        // "reveal": 0 mientras se esta en zoom normal/acercado (se ve la caja negra
+        // de siempre), y sube a 1 a medida que el usuario ACHICA la escena (pellizco
+        // de 2 dedos), revelando el otro escenario (nebulosa) alrededor de la caja.
+        float reveal = (1f - mScale) / (1f - MIN_SCALE);
+        if (reveal < 0f) reveal = 0f;
+        if (reveal > 1f) reveal = 1f;
+
+        Matrix.multiplyMM(skyboxMvp, 0, projMatrix, 0, viewMatrix, 0);
+        skybox.draw(skyboxMvp, elapsedTime, reveal);
 
         // Orden: pan -> escala -> rotacion.
         Matrix.setIdentityM(modelMatrix, 0);
@@ -196,13 +230,10 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         Matrix.multiplyMM(sunflowerModel, 0, modelMatrix, 0, localMatrix, 0);
         sunflower.draw(viewMatrix, projMatrix, sunflowerModel, lightPos, effectiveSpotAngle);
 
-        // en onDrawFrame, junto a las otras figuras:
-        Matrix.setIdentityM(localMatrix, 0);
-        Matrix.translateM(localMatrix, 0, 0.65f, 1.0f, -0.60f); // tu coordenada
-        Matrix.rotateM(localMatrix, 0, 133f, 0f, 1f, 0f);  // gira para "mirar" hacia el cuadrante X+ Z-
-        Matrix.rotateM(localMatrix, 0, -25f, 1f, 0f, 0f);  // inclina la nariz hacia afuera (no vertical)
-        Matrix.scaleM(localMatrix, 0, 1.f, 1.f, 1.f);
-        Matrix.multiplyMM(rocketModel, 0, modelMatrix, 0, localMatrix, 0);
-        rocket.draw(viewMatrix, projMatrix, rocketModel, lightPos, spotlightAngle);
+        // ---- Polvo brillante flotando: se transforma con el mismo mvpMatrix que
+        // el resto de la escena, para que quede "anclado" al diorama y rote junto
+        // con el giroscopio igual que las figuras ----
+        dustParticles.update(dt, elapsedTime);
+        dustParticles.draw(mvpMatrix);
     }
 }
