@@ -52,10 +52,13 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
     public float lightAngleX = 30f; // "altura" de la luz (latitud)
     public float lightAngleY = 45f; // giro alrededor de la escena (longitud)
 
-    // Tamaño del cono de luz (2 dedos, pellizcar)
+    // Tamaño del cono de luz (2 dedos, pellizcar, o con el SeekBar del boton)
     public float spotlightAngle = 20f;
     public static final float MIN_SPOT_ANGLE = 5f;
     public static final float MAX_SPOT_ANGLE = 60f;
+
+    // Prender/apagar la luz (controlado desde el boton en MainActivity)
+    public volatile boolean isLightOn = true;
 
     private static final float LIGHT_RADIUS = 6f;
 
@@ -150,9 +153,13 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         float lightZ = LIGHT_RADIUS * (float) (Math.cos(radLat) * Math.cos(radLon));
         float[] lightPos = {lightX, lightY, lightZ};
 
-        hemisphere.draw(mvpMatrix, modelMatrix, lightPos, spotlightAngle);
-        cylinder.draw(mvpMatrix, modelMatrix, lightPos, spotlightAngle);
-        dragon.draw(mvpMatrix, modelMatrix, lightPos, spotlightAngle);
+        // Si la luz esta apagada, el cono efectivo es 0: como las figuras no tienen
+        // termino ambiental, quedan completamente negras (luz "apagada").
+        float effectiveSpotAngle = isLightOn ? spotlightAngle : 0f;
+
+        hemisphere.draw(mvpMatrix, modelMatrix, lightPos, effectiveSpotAngle);
+        cylinder.draw(mvpMatrix, modelMatrix, lightPos, effectiveSpotAngle);
+        dragon.draw(mvpMatrix, modelMatrix, lightPos, effectiveSpotAngle);
 
         // ---- Pared 1 ----
         // NOTA: escalas x3 respecto a la version anterior porque el Cube unificado
@@ -162,7 +169,7 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         Matrix.scaleM(localMatrix, 0, 2.7f, 2.1f, 0.06f);
         Matrix.multiplyMM(mModelMatrix, 0, modelMatrix, 0, localMatrix, 0);
         Matrix.multiplyMM(mTemporaryMatrix, 0, mvpMatrix, 0, localMatrix, 0);
-        pared.draw(mTemporaryMatrix, mModelMatrix, lightPos, spotlightAngle);
+        pared.draw(mTemporaryMatrix, mModelMatrix, lightPos, effectiveSpotAngle);
 
         // ---- Pared 2 (perpendicular a la primera) ----
         Matrix.setIdentityM(localMatrix, 0);
@@ -171,20 +178,20 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         Matrix.scaleM(localMatrix, 0, 1.5f, 0.06f, 2.7f);
         Matrix.multiplyMM(mModelMatrix, 0, modelMatrix, 0, localMatrix, 0);
         Matrix.multiplyMM(mTemporaryMatrix, 0, mvpMatrix, 0, localMatrix, 0);
-        pared.draw(mTemporaryMatrix, mModelMatrix, lightPos, spotlightAngle);
+        pared.draw(mTemporaryMatrix, mModelMatrix, lightPos, effectiveSpotAngle);
 
         // ---- Mariposa en otro cuadrante ----
         Matrix.setIdentityM(localMatrix, 0);
         Matrix.translateM(localMatrix, 0, .6f, 0.5f, 0.6f);
         Matrix.scaleM(localMatrix, 0, 0.6f, 0.6f, 0.6f);
         Matrix.multiplyMM(butterflyModel, 0, modelMatrix, 0, localMatrix, 0);
-        butterfly.draw(viewMatrix, projMatrix, butterflyModel, lightPos, spotlightAngle);
+        butterfly.draw(viewMatrix, projMatrix, butterflyModel, lightPos, effectiveSpotAngle);
 
         // ---- Girasol ----
         Matrix.setIdentityM(localMatrix, 0);
         Matrix.translateM(localMatrix, 0, -0.65f, 1.0f, 0.60f);
         Matrix.scaleM(localMatrix, 0, 0.58f, 0.58f, 0.58f);
         Matrix.multiplyMM(sunflowerModel, 0, modelMatrix, 0, localMatrix, 0);
-        sunflower.draw(viewMatrix, projMatrix, sunflowerModel, lightPos, spotlightAngle);
+        sunflower.draw(viewMatrix, projMatrix, sunflowerModel, lightPos, effectiveSpotAngle);
     }
 }

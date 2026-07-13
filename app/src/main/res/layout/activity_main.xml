@@ -1,19 +1,15 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".MainActivity">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
+<!--
+    Este layout ya NO es el contentView directo de la Activity.
+    MainActivity crea el GLSurfaceView por codigo y le agrega ESTE layout
+    encima (como overlay) dentro de un FrameLayout, para tener los controles
+    de luz (boton on/off + slider del cono) flotando sobre la escena 3D.
+ -->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" xmlns:tools="http://schemas.android.com/tools" android:id="@+id/main" android:layout_width="match_parent" android:layout_height="match_parent" tools:context=".MainActivity">
+    <!--  Panel de controles de luz, pegado abajo, con fondo semitransparente
+             para que se lea bien sobre el fondo negro de la escena  -->
+    <LinearLayout android:id="@+id/lightControlsPanel" android:layout_width="0dp" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp" android:background="#99000000" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintBottom_toBottomOf="parent">
+        <Button android:id="@+id/btnToggleLight" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center_horizontal" android:text="Apagar luz"/>
+        <TextView android:id="@+id/tvSpotAngleLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:textColor="#FFFFFF" android:text="Cono de luz"/>
+        <SeekBar android:id="@+id/seekSpotAngle" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+    </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
