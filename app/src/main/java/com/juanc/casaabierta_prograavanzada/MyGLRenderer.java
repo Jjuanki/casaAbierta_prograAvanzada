@@ -70,6 +70,12 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
 
     private static final float LIGHT_RADIUS = 6f;
 
+    private FloorTile tileDragon;      // caverna volcanica
+    private FloorTile tileRocket;      // plataforma espacial
+    private FloorTile tileButterfly;   // jardin/pradera
+    private FloorTile tileSunflower;   // campo soleado
+    private Cube dividerBeam;
+
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         GLES20.glClearColor(0f, 0f, 0f, 1f); // fondo negro: todo se revela con la luz
@@ -93,6 +99,7 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
                 2.4f,                             // rango vertical (antes 2.0)
                 new float[]{1.0f, 0.92f, 0.7f, 0.85f}, // color calido tipo "luciernaga"
                 9f                                 // tamaño del punto en pixeles
+
         );
 
         // Polvo ambiental: nube mucho mas grande que cubre TODO el escenario visible.
@@ -106,6 +113,13 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
                 new float[]{0.75f, 0.85f, 1.0f, 0.5f}, // brillo frio, sutil, de fondo
                 5f
         );
+
+        tileDragon    = new FloorTile(0.35f, 0.55f, 0.25f, 1f );
+        tileRocket    = new FloorTile(0.12f, 0.14f, 0.22f, 1f);
+        tileButterfly = new FloorTile(0.25f, 0.12f, 0.10f, 1f);
+        tileSunflower = new FloorTile(0.85f, 0.70f, 0.20f, 1f );
+        dividerBeam   = new Cube(0.15f, 0.10f, 0.08f, 1f);
+
     }
 
     /**
@@ -211,6 +225,16 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         cylinder.draw(mvpMatrix, modelMatrix, lightPos, effectiveSpotAngle);
         dragon.draw(mvpMatrix, modelMatrix, lightPos, effectiveSpotAngle);
 
+        float R = 1.48f;      // un pelin menos que 1.5 para no sobresalir del domo
+        float THICK = 0.03f;
+        float Y = 0.015f;     // apenas sobre y=0, evita z-fighting con la tapa del hemisferio
+
+        drawTile(tileDragon,    0f,   R, THICK, Y, modelMatrix, mvpMatrix, lightPos, effectiveSpotAngle);
+        drawTile(tileRocket,    90f,  R, THICK, Y, modelMatrix, mvpMatrix, lightPos, effectiveSpotAngle);
+        drawTile(tileButterfly, 180f, R, THICK, Y, modelMatrix, mvpMatrix, lightPos, effectiveSpotAngle);
+        drawTile(tileSunflower, 270f, R, THICK, Y, modelMatrix, mvpMatrix, lightPos, effectiveSpotAngle);
+
+
         // ---- Pared 1 ----
         // NOTA: escalas x3 respecto a la version anterior porque el Cube unificado
         // ahora es de -0.5 a 0.5 (antes era de -1.5 a 1.5 en la version de "separation").
@@ -256,6 +280,18 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         // repartidas por todo el escenario visible. ----
         ambientParticles.update(dt, elapsedTime);
         ambientParticles.draw(skyboxMvp);
+
+    }
+
+    private void drawTile(FloorTile tile, float rotY, float radius, float thickness, float y,
+                          float[] modelMatrix, float[] mvpMatrix, float[] lightPos, float spotAngle) {
+        Matrix.setIdentityM(localMatrix, 0);
+        Matrix.translateM(localMatrix, 0, 0f, y, 0f);
+        Matrix.rotateM(localMatrix, 0, rotY, 0f, 1f, 0f);
+        Matrix.scaleM(localMatrix, 0, radius, thickness, radius);
+        Matrix.multiplyMM(mModelMatrix, 0, modelMatrix, 0, localMatrix, 0);
+        Matrix.multiplyMM(mTemporaryMatrix, 0, mvpMatrix, 0, localMatrix, 0);
+        tile.draw(mTemporaryMatrix, mModelMatrix, lightPos, spotAngle);
     }
 
     /**
