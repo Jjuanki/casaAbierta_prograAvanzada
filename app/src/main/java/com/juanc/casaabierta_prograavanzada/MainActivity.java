@@ -7,10 +7,14 @@ import android.hardware.SensorManager;
 import android.media.MediaPlayer;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.SeekBar;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -20,6 +24,12 @@ public class MainActivity extends AppCompatActivity {
     private MyGLSurfaceView glView;
     private MyGLRenderer renderer;
     private MediaPlayer mediaPlayer;
+
+    // ---- Repeticion continua de las flechas del D-pad mientras se mantienen
+    // presionadas (en vez de un solo paso por tap). ----
+    private final Handler dpadHandler = new Handler(Looper.getMainLooper());
+    private Runnable dpadRepeatRunnable;
+    private static final long DPAD_REPEAT_DELAY_MS = 60L;
 
     // ---- Giroscopio / sensor de rotacion: inclina el modelo 3D segun la
     // inclinacion fisica del telefono (efecto "ventana al mundo 3D"). ----
@@ -103,6 +113,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(root);
 
         setupLightControls(controls);
+        setupMovementControls(controls);
 
         // Musica de fondo en loop.
         // IMPORTANTE: debes agregar un archivo de audio en res/raw llamado
@@ -113,6 +124,55 @@ public class MainActivity extends AppCompatActivity {
             mediaPlayer.setLooping(true);
             mediaPlayer.setVolume(0.5f, 0.5f);
         }
+    }
+
+    /**
+     * Conecta las 4 flechas del D-pad con MyGLRenderer.moveUp/Down/Left/Right().
+     * Usa OnTouchListener (no OnClickListener) para poder repetir el movimiento
+     * mientras el dedo se mantiene presionado sobre el boton, no solo en el tap.
+     */
+    private void setupMovementControls(View controls) {
+        ImageButton btnUp = controls.findViewById(R.id.btnMoveUp);
+        ImageButton btnDown = controls.findViewById(R.id.btnMoveDown);
+        ImageButton btnLeft = controls.findViewById(R.id.btnMoveLeft);
+        ImageButton btnRight = controls.findViewById(R.id.btnMoveRight);
+
+        setupHoldToRepeat(btnUp, () -> renderer.moveUp());
+        setupHoldToRepeat(btnDown, () -> renderer.moveDown());
+        setupHoldToRepeat(btnLeft, () -> renderer.moveLeft());
+        setupHoldToRepeat(btnRight, () -> renderer.moveRight());
+    }
+
+    /** Ejecuta `action` una vez al presionar, y sigue repitiendo cada DPAD_REPEAT_DELAY_MS mientras se mantenga apretado. */
+    private void setupHoldToRepeat(View button, Runnable action) {
+        button.setOnTouchListener((v, event) -> {
+            switch (event.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    dpadRepeatRunnable = new Runnable() {
+                        @Override
+                        public void run() {
+                            action.run();
+                            dpadHandler.postDelayed(this, DPAD_REPEAT_DELAY_MS);
+                        }
+                    };
+                    dpadHandler.post(dpadRepeatRunnable);
+                    v.setPressed(true);
+                    return true;
+
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    if (dpadRepeatRunnable != null) {
+                        dpadHandler.removeCallbacks(dpadRepeatRunnable);
+                        dpadRepeatRunnable = null;
+                    }
+                    v.setPressed(false);
+                    v.performClick();
+                    return true;
+
+                default:
+                    return false;
+            }
+        });
     }
 
     /** Conecta el boton on/off y el SeekBar del cono de luz con el renderer. */
@@ -177,6 +237,8 @@ public class MainActivity extends AppCompatActivity {
         if (glView != null) glView.onPause();
         if (mediaPlayer != null && mediaPlayer.isPlaying()) mediaPlayer.pause();
         if (sensorManager != null) sensorManager.unregisterListener(rotationListener);
+        dpadHandler.removeCallbacksAndMessages(null);
+        dpadRepeatRunnable = null;
     }
 
     @Override

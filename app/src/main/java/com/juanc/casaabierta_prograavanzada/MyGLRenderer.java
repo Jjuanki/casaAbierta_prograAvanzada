@@ -6,6 +6,8 @@ import android.opengl.Matrix;
 
 import com.juanc.casaabierta_prograavanzada.Dibujos.Butterfly;
 import com.juanc.casaabierta_prograavanzada.Dibujos.PixelArtFigure;
+import com.juanc.casaabierta_prograavanzada.Dibujos.Rocket;
+import com.juanc.casaabierta_prograavanzada.Dibujos.SceneryProps;
 import com.juanc.casaabierta_prograavanzada.Dibujos.Sunflower;
 
 import java.util.HashMap;
@@ -29,6 +31,9 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
     private Cube pared;
     private Butterfly butterfly;
     private final float[] butterflyModel = new float[16];
+    private Rocket rocket;
+    private final float[] rocketModel = new float[16];
+    private SceneryProps scenery; // rocas, flores, chatarra espacial, trigo: 1 set por cuadrante
     // ---- Fondo dinamico (skybox) y particulas de polvo brillante ----
     private Skybox skybox;
     private ParticleSystem dustParticles;    // "polvo" anclado a la figura (rota/escala con ella)
@@ -46,6 +51,17 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
     // Rotacion del modelo (controlada con 1 dedo, ver MyGLSurfaceView)
     public float mAngleX = 0f;
     public float mAngleY = 0f;
+
+    // Offset de rotacion controlado por las flechas del D-pad: se SUMA a
+    // mAngleX/mAngleY del giroscopio (que MainActivity reescribe en cada
+    // evento del sensor), en vez de pisarlo. Asi las flechas "orbitan"
+    // alrededor de la isla igual que si inclinaras el telefono, y podes
+    // combinar ambos controles sin que se pisen entre si.
+    public float mAngleXOffset = 0f; // orbita horizontal (eje Y) -> izquierda/derecha
+    public float mAngleYOffset = 0f; // inclinacion vertical (eje X) -> arriba/abajo
+
+    private static final float ROTATE_STEP = 2.5f;         // grados que gira por cada "tick" de flecha
+    private static final float PITCH_OFFSET_LIMIT = 60f;   // limite del offset vertical (arriba/abajo), para no voltear la escena
 
     // Pan del escenario en X/Y. Disponible por si conectas algun gesto a esto.
     public float mPanX = 0f;
@@ -88,6 +104,8 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         sunflower = new Sunflower();
         pared = new Cube();
         butterfly = new Butterfly();
+        rocket = new Rocket();
+        scenery = new SceneryProps();
 
         skybox = new Skybox();
 
@@ -114,9 +132,15 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
                 5f
         );
 
-        tileDragon    = new FloorTile(0.35f, 0.55f, 0.25f, 1f );
-        tileRocket    = new FloorTile(0.12f, 0.14f, 0.22f, 1f);
-        tileButterfly = new FloorTile(0.25f, 0.12f, 0.10f, 1f);
+        // Colores elegidos para que cada cuadrante se note SIEMPRE contra el fondo
+        // negro estrellado (antes el de la Mariposa era casi negro y se confundia
+        // con el espacio, dando la sensacion de que no tenia piso propio / se
+        // "salia" hacia el cuadrante vecino). Ademas Dragon y Mariposa ya no
+        // comparten un verde parecido: Dragon = roca volcanica grisacea/rojiza,
+        // Mariposa = verde pradera bien vivo.
+        tileDragon    = new FloorTile(0.32f, 0.22f, 0.20f, 1f ); // roca volcanica grisacea/rojiza
+        tileRocket    = new FloorTile(0.16f, 0.20f, 0.34f, 1f ); // plataforma espacial, azul oscuro (un poco mas visible que antes)
+        tileButterfly = new FloorTile(0.28f, 0.62f, 0.30f, 1f ); // pradera verde vivo (antes casi negro)
         tileSunflower = new FloorTile(0.85f, 0.70f, 0.20f, 1f );
         dividerBeam   = new Cube(0.15f, 0.10f, 0.08f, 1f);
 
@@ -199,8 +223,8 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         Matrix.setIdentityM(modelMatrix, 0);
         Matrix.translateM(modelMatrix, 0, mPanX, mPanY, 0f);
         Matrix.scaleM(modelMatrix, 0, mScale, mScale, mScale);
-        Matrix.rotateM(modelMatrix, 0, mAngleX, 0f, 1f, 0f);
-        Matrix.rotateM(modelMatrix, 0, mAngleY, 1f, 0f, 0f);
+        Matrix.rotateM(modelMatrix, 0, mAngleX + mAngleXOffset, 0f, 1f, 0f);
+        Matrix.rotateM(modelMatrix, 0, mAngleY + mAngleYOffset, 1f, 0f, 0f);
 
         Matrix.multiplyMM(mvpMatrix, 0, viewMatrix, 0, modelMatrix, 0);
         Matrix.multiplyMM(mvpMatrix, 0, projMatrix, 0, mvpMatrix, 0);
@@ -225,13 +249,26 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         cylinder.draw(mvpMatrix, modelMatrix, lightPos, effectiveSpotAngle);
         dragon.draw(mvpMatrix, modelMatrix, lightPos, effectiveSpotAngle);
 
+        // ---- Escenario del Dragon: rocas y brasas de lava (caverna volcanica) ----
+        // Se generan desde GROUND_Y (la coordenada de la "tapa" del hemisferio,
+        // y=0), igual que las FloorTile, para que queden paradas sobre el piso.
+        scenery.drawVolcanicRocks(viewMatrix, projMatrix, modelMatrix, lightPos, effectiveSpotAngle);
+
         float R = 1.48f;      // un pelin menos que 1.5 para no sobresalir del domo
         float THICK = 0.03f;
         float Y = 0.015f;     // apenas sobre y=0, evita z-fighting con la tapa del hemisferio
 
-        drawTile(tileDragon,    0f,   R, THICK, Y, modelMatrix, mvpMatrix, lightPos, effectiveSpotAngle);
+        // NOTA (fix): cada FloorTile es una cuña circular de 90 grados. El rotY
+        // determina en QUE cuadrante del mundo cae esa cuña. El Dragon vive en
+        // x<0,z<0 y la Mariposa en x>0,z>0 (ver sus translate mas abajo), pero
+        // antes tenian el rotY cruzado entre si: la mariposa (y sus flores)
+        // quedaban paradas sobre la losa/cuadrante circular del dragon (y el
+        // dragon sobre la de la mariposa), por eso el "escenario de la
+        // mariposa" se veia salido de su cuadrante. Con 180/0 corregidos, cada
+        // figura y su set de props quedan dentro de su propia cuña circular.
+        drawTile(tileDragon,    180f, R, THICK, Y, modelMatrix, mvpMatrix, lightPos, effectiveSpotAngle);
         drawTile(tileRocket,    90f,  R, THICK, Y, modelMatrix, mvpMatrix, lightPos, effectiveSpotAngle);
-        drawTile(tileButterfly, 180f, R, THICK, Y, modelMatrix, mvpMatrix, lightPos, effectiveSpotAngle);
+        drawTile(tileButterfly, 0f,   R, THICK, Y, modelMatrix, mvpMatrix, lightPos, effectiveSpotAngle);
         drawTile(tileSunflower, 270f, R, THICK, Y, modelMatrix, mvpMatrix, lightPos, effectiveSpotAngle);
 
 
@@ -261,12 +298,32 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         Matrix.multiplyMM(butterflyModel, 0, modelMatrix, 0, localMatrix, 0);
         butterfly.draw(viewMatrix, projMatrix, butterflyModel, lightPos, effectiveSpotAngle);
 
+        // ---- Escenario de la Mariposa: flores y pasto (jardin/pradera) ----
+        // OJO: se pasa "modelMatrix" (el de la escena, sobre la tapa), NO
+        // "butterflyModel" (que ya trae el translate+escala propios de la
+        // mariposa) para que las flores queden generadas desde GROUND_Y y no
+        // desde adentro de la mariposa.
+        scenery.drawGardenFlowers(viewMatrix, projMatrix, modelMatrix, lightPos, effectiveSpotAngle);
+
         // ---- Girasol ----
         Matrix.setIdentityM(localMatrix, 0);
         Matrix.translateM(localMatrix, 0, -0.65f, 1.0f, 0.60f);
         Matrix.scaleM(localMatrix, 0, 0.58f, 0.58f, 0.58f);
         Matrix.multiplyMM(sunflowerModel, 0, modelMatrix, 0, localMatrix, 0);
         sunflower.draw(viewMatrix, projMatrix, sunflowerModel, lightPos, effectiveSpotAngle);
+
+        // ---- Escenario del Girasol: espigas de trigo y rocas (campo soleado) ----
+        scenery.drawSunnyFieldProps(viewMatrix, projMatrix, modelMatrix, lightPos, effectiveSpotAngle);
+
+        // ---- Cohete (cuadrante de tileRocket, rotY=90) ----
+        Matrix.setIdentityM(localMatrix, 0);
+        Matrix.translateM(localMatrix, 0, 0.65f, 1.0f, -0.6f);
+        Matrix.scaleM(localMatrix, 0, 0.6f, 0.6f, 0.6f);
+        Matrix.multiplyMM(rocketModel, 0, modelMatrix, 0, localMatrix, 0);
+        rocket.draw(viewMatrix, projMatrix, rocketModel, lightPos, effectiveSpotAngle);
+
+        // ---- Escenario del Cohete: asteroides, antena y estrellas (plataforma espacial) ----
+        scenery.drawSpacePlatformProps(viewMatrix, projMatrix, modelMatrix, lightPos, effectiveSpotAngle);
 
         // ---- Polvo brillante flotando: se transforma con el mismo mvpMatrix que
         // el resto de la escena, para que quede "anclado" al diorama y rote junto
@@ -303,5 +360,41 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         mScale = 1f;
         mPanX = 0f;
         mPanY = 0f;
+        mAngleXOffset = 0f;
+        mAngleYOffset = 0f;
+    }
+
+    // ---- Movimiento por botones de flecha (D-pad de la UI) ----
+    // En vez de desplazar la camara en linea recta (paneo), giran la escena
+    // sobre los MISMOS ejes que el giroscopio: izquierda/derecha orbitan
+    // alrededor de la isla (para ir viendo Dragon -> Cohete -> Mariposa ->
+    // Girasol, que estan repartidos en un circulo), y arriba/abajo inclinan
+    // la vista como si te agacharas o te pararas de puntitas. El offset se
+    // SUMA a mAngleX/mAngleY del giroscopio en onDrawFrame, no lo reemplaza,
+    // asi ambos controles conviven sin pisarse.
+    public void moveLeft() {
+        mAngleXOffset = normalizeAngle(mAngleXOffset - ROTATE_STEP);
+    }
+
+    public void moveRight() {
+        mAngleXOffset = normalizeAngle(mAngleXOffset + ROTATE_STEP);
+    }
+
+    public void moveUp() {
+        mAngleYOffset = clamp(mAngleYOffset + ROTATE_STEP, -PITCH_OFFSET_LIMIT, PITCH_OFFSET_LIMIT);
+    }
+
+    public void moveDown() {
+        mAngleYOffset = clamp(mAngleYOffset - ROTATE_STEP, -PITCH_OFFSET_LIMIT, PITCH_OFFSET_LIMIT);
+    }
+
+    private static float clamp(float v, float min, float max) {
+        return Math.max(min, Math.min(max, v));
+    }
+
+    private static float normalizeAngle(float angle) {
+        while (angle > 180f) angle -= 360f;
+        while (angle < -180f) angle += 360f;
+        return angle;
     }
 }
