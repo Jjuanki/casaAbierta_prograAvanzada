@@ -124,12 +124,15 @@ public class SceneryProps {
      * (grassBlade), pero por pedido se sacaron y quedan solo las florcitas.
      */
     public void drawGardenFlowers(float[] viewMatrix, float[] projMatrix, float[] sceneModel,
-                                   float[] lightPos, float spotlightAngle) {
-        drawFlower(flowerBloomPink,   sceneModel, 0.30f, 0.85f, 0.20f, viewMatrix, projMatrix, lightPos, spotlightAngle);
-        drawFlower(flowerBloomPurple, sceneModel, 0.95f, 0.35f, 0.16f, viewMatrix, projMatrix, lightPos, spotlightAngle);
-        drawFlower(flowerBloomWhite,  sceneModel, 0.85f, 0.90f, 0.14f, viewMatrix, projMatrix, lightPos, spotlightAngle);
-        drawFlower(flowerBloomPurple, sceneModel, 0.55f, 0.55f, 0.18f, viewMatrix, projMatrix, lightPos, spotlightAngle); // flor extra al centro
-        drawFlower(flowerBloomPink,   sceneModel, 0.90f, 0.75f, 0.15f, viewMatrix, projMatrix, lightPos, spotlightAngle); // flor extra cerca del borde, con margen
+                                  float[] lightPos, float spotlightAngle) {
+        // Distribuimos varias florecitas en el cuadrante x>0, z>0.
+        // Se usan distintos colores y alturas para dar variedad.
+        drawFlower(flowerBloomPink,   sceneModel, 0.35f, 0.35f, 0.16f, viewMatrix, projMatrix, lightPos, spotlightAngle);
+        drawFlower(flowerBloomPurple, sceneModel, 0.90f, 0.30f, 0.13f, viewMatrix, projMatrix, lightPos, spotlightAngle);
+        drawFlower(flowerBloomWhite,  sceneModel, 0.55f, 0.85f, 0.15f, viewMatrix, projMatrix, lightPos, spotlightAngle);
+        drawFlower(flowerBloomPink,   sceneModel, 0.95f, 0.75f, 0.12f, viewMatrix, projMatrix, lightPos, spotlightAngle);
+        drawFlower(flowerBloomPurple, sceneModel, 0.60f, 0.55f, 0.14f, viewMatrix, projMatrix, lightPos, spotlightAngle); // florecita extra al centro
+        drawFlower(flowerBloomWhite,  sceneModel, 1.10f, 0.45f, 0.11f, viewMatrix, projMatrix, lightPos, spotlightAngle); // florecita extra cerca del borde
     }
 
     /**
@@ -175,7 +178,7 @@ public class SceneryProps {
                             float[] viewMatrix, float[] projMatrix,
                             float[] lightPos, float spotlightAngle) {
         drawPart(flowerStem, sceneModel, x, GROUND_Y + stemHeight / 2f, z, 0f, 0f,
-                0.5f, stemHeight, 0.45f, viewMatrix, projMatrix, lightPos, spotlightAngle);
+                0.035f, stemHeight, 0.035f, viewMatrix, projMatrix, lightPos, spotlightAngle);
         drawSphere(bloom, sceneModel, x, GROUND_Y + stemHeight, z, 0.06f,
                 viewMatrix, projMatrix, lightPos, spotlightAngle);
     }

@@ -4,7 +4,8 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.media.MediaPlayer;
+import android.media.AudioAttributes;
+import android.media.SoundPool;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.Handler;
@@ -18,12 +19,21 @@ import android.widget.ImageButton;
 import android.widget.SeekBar;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.juanc.casaabierta_prograavanzada.MyGLRenderer;
+import com.juanc.casaabierta_prograavanzada.MyGLSurfaceView;
+
 
 public class MainActivity extends AppCompatActivity {
 
     private MyGLSurfaceView glView;
     private MyGLRenderer renderer;
-    private MediaPlayer mediaPlayer;
+
+    // ---- Sonidos de click para los botones (en vez de musica de fondo) ----
+    private SoundPool soundPool;
+    private int clickSoundId = -1;   // boton de luz / recentrar
+    private int arrowSoundId = -1;   // las 4 flechas del D-pad
+    private boolean clickSoundLoaded = false;
+    private boolean arrowSoundLoaded = false;
 
     // ---- Repeticion continua de las flechas del D-pad mientras se mantienen
     // presionadas (en vez de un solo paso por tap). ----
@@ -115,14 +125,38 @@ public class MainActivity extends AppCompatActivity {
         setupLightControls(controls);
         setupMovementControls(controls);
 
-        // Musica de fondo en loop.
-        // IMPORTANTE: debes agregar un archivo de audio en res/raw llamado
-        // "background_music" (ej: background_music.mp3) para que esto compile.
+        // Sonidos de click para los botones.
+        // IMPORTANTE: debes agregar 2 archivos de audio cortos en res/raw:
+        // "click" (boton de luz / recentrar) y "arrow" (las 4 flechas).
         // Ver instrucciones en el chat.
-        mediaPlayer = MediaPlayer.create(this, R.raw.danza);
-        if (mediaPlayer != null) {
-            mediaPlayer.setLooping(true);
-            mediaPlayer.setVolume(0.5f, 0.5f);
+        AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build();
+        soundPool = new SoundPool.Builder()
+                .setMaxStreams(4)
+                .setAudioAttributes(audioAttributes)
+                .build();
+        soundPool.setOnLoadCompleteListener((sp, sampleId, status) -> {
+            if (status != 0) return;
+            if (sampleId == clickSoundId) clickSoundLoaded = true;
+            if (sampleId == arrowSoundId) arrowSoundLoaded = true;
+        });
+        clickSoundId = soundPool.load(this, R.raw.click, 1);
+        arrowSoundId = soundPool.load(this, R.raw.click, 1);
+    }
+
+    /** Reproduce el sonido de click (luz / recentrar), si ya termino de cargar. */
+    private void playClickSound() {
+        if (soundPool != null && clickSoundLoaded) {
+            soundPool.play(clickSoundId, 1f, 1f, 1, 0, 1f);
+        }
+    }
+
+    /** Reproduce el sonido de las flechas del D-pad, si ya termino de cargar. */
+    private void playArrowSound() {
+        if (soundPool != null && arrowSoundLoaded) {
+            soundPool.play(arrowSoundId, 1f, 1f, 1, 0, 1f);
         }
     }
 
@@ -148,6 +182,7 @@ public class MainActivity extends AppCompatActivity {
         button.setOnTouchListener((v, event) -> {
             switch (event.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:
+                    playArrowSound();
                     dpadRepeatRunnable = new Runnable() {
                         @Override
                         public void run() {
@@ -185,6 +220,7 @@ public class MainActivity extends AppCompatActivity {
         // vuelve a tomar la inclinacion actual del telefono como "derecho", por si el
         // giroscopio quedo desviado.
         btnCenterFigure.setOnClickListener(v -> {
+            playClickSound();
             if (renderer != null) {
                 renderer.centrarFigura();
             }
@@ -193,6 +229,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Boton: prender/apagar la luz.
         btnToggleLight.setOnClickListener(v -> {
+            playClickSound();
             renderer.isLightOn = !renderer.isLightOn;
             btnToggleLight.setText(renderer.isLightOn ? "Apagar luz" : "Prender luz");
         });
@@ -221,7 +258,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if (glView != null) glView.onResume();
-        if (mediaPlayer != null && !mediaPlayer.isPlaying()) mediaPlayer.start();
 
         // Recalibra el "derecho" del modelo cada vez que se reanuda la app,
         // usando la orientacion actual del telefono como punto de partida.
@@ -235,7 +271,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         if (glView != null) glView.onPause();
-        if (mediaPlayer != null && mediaPlayer.isPlaying()) mediaPlayer.pause();
         if (sensorManager != null) sensorManager.unregisterListener(rotationListener);
         dpadHandler.removeCallbacksAndMessages(null);
         dpadRepeatRunnable = null;
@@ -244,9 +279,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (mediaPlayer != null) {
-            mediaPlayer.release();
-            mediaPlayer = null;
+        if (soundPool != null) {
+            soundPool.release();
+            soundPool = null;
         }
     }
 }
